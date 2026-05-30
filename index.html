@@ -122,6 +122,9 @@
     body:not(.light) .btn-header:hover {
       animation: pinkPulse 0.8s ease-in-out infinite;
     }
+    #mobile-search-toggle-btn {
+      display: none;
+    }
 
     #entry-count {
       font-size: 12px;
@@ -3644,6 +3647,26 @@
       #search-wrapper {
         flex: 1 1 100%;
         order: 10;
+        display: none;
+      }
+      body.mobile-search-open #search-wrapper {
+        display: block;
+      }
+      #search-input {
+        height: 34px;
+        padding: 6px 12px;
+      }
+      #mobile-search-toggle-btn {
+        align-items: center;
+        display: inline-flex;
+        justify-content: center;
+        min-height: 34px;
+        min-width: 34px;
+        padding: 6px 8px;
+      }
+      body.mobile-search-open #mobile-search-toggle-btn {
+        border-color: var(--blog-accent);
+        color: var(--blog-accent);
       }
       #import-btn,
       #export-btn {
@@ -3691,16 +3714,33 @@
       body.mobile-detail-open #article-list-panel { transform: translateX(-24%); }
       body.mobile-detail-open #detail-panel { transform: translateX(0); }
       body.mobile-detail-open #header { display: none; }
-      #article-list-header {
-        padding: 10px;
+      #article-list-header,
+      body.light #article-list-header {
+        box-sizing: border-box;
+        font-size: 12px;
+        min-height: 32px;
+        padding: 4px 8px;
       }
       .article-list-heading {
-        gap: 8px;
-        width: 100%;
-      }
-      #tag-filter-select {
-        flex: 1;
+        flex: 1 1 auto;
+        flex-wrap: nowrap;
+        font-size: 12px;
+        gap: 6px;
+        line-height: 1.2;
         min-width: 0;
+        width: auto;
+      }
+      .article-list-heading > span:first-child {
+        white-space: nowrap;
+      }
+      #tag-filter-select,
+      body.light #tag-filter-select {
+        flex: 1;
+        font-size: 11px;
+        height: 28px;
+        max-width: 48vw;
+        min-width: 0;
+        padding: 0 24px 0 8px;
       }
       #resizer-right {
         display: none;
@@ -3755,24 +3795,35 @@
         line-clamp: 2;
       }
       #detail-header {
-        padding: 10px 12px;
+        padding: 8px 6px;
+      }
+      #main.panel-detail:not(.tile-mode):not(.palette-gallery-mode) #detail-header > *,
+      #main.panel-detail:not(.tile-mode):not(.palette-gallery-mode) #detail-content {
+        width: calc(100vw - 12px);
+      }
+      #main.panel-detail:not(.tile-mode):not(.palette-gallery-mode) #detail-back-btn {
+        margin-left: 6px;
+        margin-right: auto;
       }
       #detail-title {
         font-size: 20px;
         line-height: 1.45;
       }
       #detail-content {
-        padding: 16px 14px 90px;
+        padding: 14px 6px 90px;
         font-size: 16px;
         line-height: 1.8;
+      }
+      #main.panel-edit:not(.tile-mode):not(.palette-gallery-mode) #edit-view {
+        width: calc(100vw - 8px);
       }
       #edit-view.visible {
         overflow-y: auto;
       }
       #edit-header {
         align-items: flex-start;
-        gap: 8px;
-        padding: 10px;
+        gap: 6px;
+        padding: 8px 6px;
       }
       #edit-title-input {
         min-width: 0;
@@ -3784,11 +3835,11 @@
       }
       #edit-meta,
       #edit-meta-tags {
-        padding: 8px 10px;
+        padding: 6px;
       }
       #edit-comment-area {
         min-height: 48vh;
-        padding: 38px 14px 18px;
+        padding: 36px 6px 18px;
         font-size: 16px;
       }
       .ai-assist-panel {
@@ -3833,6 +3884,7 @@
   <div id="search-wrapper">
     <input id="search-input" type="text" placeholder="🔍 タイトル・タグ・本文を検索...">
   </div>
+  <button class="btn-header" id="mobile-search-toggle-btn" type="button" data-tooltip="検索" aria-label="検索" aria-controls="search-wrapper" aria-expanded="false">🔍</button>
   <button class="btn-header" id="import-btn">import</button>
   <input id="import-file" type="file" accept=".json" hidden>
   <button class="btn-header" id="export-btn">export</button>
@@ -5531,6 +5583,20 @@ function setPanel(mode) {
   }
 }
 
+function setMobileSearchOpen(open, focus = false) {
+  document.body.classList.toggle('mobile-search-open', open);
+  const btn = document.getElementById('mobile-search-toggle-btn');
+  if (btn) btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  if (open && focus) {
+    setTimeout(() => document.getElementById('search-input')?.focus(), 0);
+  }
+}
+
+function toggleMobileSearch() {
+  const nextOpen = !document.body.classList.contains('mobile-search-open');
+  setMobileSearchOpen(nextOpen, nextOpen);
+}
+
 // ---- Events ----
 function bindEvents() {
   // Tag filter
@@ -5584,6 +5650,7 @@ function bindEvents() {
   });
 
   // Search
+  document.getElementById('mobile-search-toggle-btn')?.addEventListener('click', toggleMobileSearch);
   document.getElementById('search-input').addEventListener('input', e => {
     searchQuery = e.target.value;
     displayCount = PAGE_SIZE;
@@ -8611,6 +8678,11 @@ document.addEventListener('keydown', e => {
         document.getElementById('tof-md-ref-btn').classList.remove('active');
         return;
       }
+      if (e.target.id === 'search-input' && document.body.classList.contains('mobile-search-open')) {
+        e.preventDefault();
+        setMobileSearchOpen(false);
+        return;
+      }
       e.target.blur();
       // 編集中なら編集キャンセルも行う
       if (document.getElementById('edit-view').classList.contains('visible')) {
@@ -8668,7 +8740,11 @@ document.addEventListener('keydown', e => {
       break;
     case '/':
       e.preventDefault();
-      document.getElementById('search-input').focus();
+      if (window.matchMedia('(max-width: 720px)').matches) {
+        setMobileSearchOpen(true, true);
+      } else {
+        document.getElementById('search-input').focus();
+      }
       break;
     case ' ':
       if (inDetail) {
