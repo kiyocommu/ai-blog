@@ -1186,6 +1186,38 @@
       font-size: 12px;
       font-weight: 700;
     }
+    .settings-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 12px;
+      border: 1px solid #1a3a6e;
+      border-radius: 6px;
+      background: rgba(15, 52, 96, 0.38);
+    }
+    .settings-row-label {
+      color: #c8d6e5;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    #settings-theme-toggle-btn {
+      background: transparent;
+      border: 1px solid #2b4f76;
+      border-radius: 999px;
+      color: #b0bdd0;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1;
+      padding: 7px 12px;
+      white-space: nowrap;
+    }
+    #settings-theme-toggle-btn:hover {
+      background: #17284a;
+      border-color: #e94560;
+      color: #fff;
+    }
     .cloud-settings-grid {
       display: flex;
       flex-direction: column;
@@ -1949,6 +1981,20 @@
     body.light .lm-mbti-label { color: #6a7090; }
     body.light .settings-section { border-top-color: #C5CCE0; }
     body.light .settings-section-title { color: #e94560; }
+    body.light .settings-row {
+      background: #EEF1F8;
+      border-color: #C5CCE0;
+    }
+    body.light .settings-row-label { color: #1a1a2e; }
+    body.light #settings-theme-toggle-btn {
+      border-color: #B8C2D8;
+      color: #4f6380;
+    }
+    body.light #settings-theme-toggle-btn:hover {
+      background: #D4DBEC;
+      border-color: #e94560;
+      color: #1a1a2e;
+    }
     body.light .lm-mbti-option {
       background: #EEF1F8;
       border-color: #C5CCE0;
@@ -4236,6 +4282,13 @@
       <button id="lm-settings-close" type="button">✕</button>
     </div>
     <div id="lm-settings-body">
+      <div class="settings-section app-settings-section">
+        <div class="settings-section-title">表示設定</div>
+        <div class="settings-row">
+          <span class="settings-row-label">表示テーマ</span>
+          <button id="settings-theme-toggle-btn" type="button" data-tooltip="テーマを切り替え" aria-label="ライト / ダークモード切替">ライト</button>
+        </div>
+      </div>
       <div class="settings-section lm-studio-settings-section">
         <div class="settings-section-title">LM Studio設定</div>
         <label id="lm-settings-enabled-row">
@@ -4782,15 +4835,40 @@ window.addEventListener('storage', e => {
 // ---- Theme ----
 const THEME_KEY = 'aiblog_theme';
 
-function initTheme() {
-  if (localStorage.getItem(THEME_KEY) !== 'dark') document.body.classList.add('light');
+function getCurrentTheme() {
+  return document.body.classList.contains('light') ? 'light' : 'dark';
 }
 
-document.getElementById('theme-btn').addEventListener('click', () => {
+function updateThemeControls() {
+  const currentTheme = getCurrentTheme();
+  const label = currentTheme === 'light' ? 'ライト' : 'ダーク';
+  const nextLabel = currentTheme === 'light' ? 'ダークモードに切り替え' : 'ライトモードに切り替え';
+  const settingsBtn = document.getElementById('settings-theme-toggle-btn');
+  if (settingsBtn) {
+    settingsBtn.textContent = label;
+    settingsBtn.setAttribute('aria-label', nextLabel);
+    settingsBtn.dataset.tooltip = nextLabel;
+  }
+  const footerBtn = document.getElementById('theme-btn');
+  if (footerBtn) {
+    footerBtn.setAttribute('aria-label', nextLabel);
+    footerBtn.dataset.tooltip = nextLabel;
+  }
+}
+
+function initTheme() {
+  if (localStorage.getItem(THEME_KEY) !== 'dark') document.body.classList.add('light');
+  updateThemeControls();
+}
+
+function toggleTheme() {
   document.body.classList.toggle('light');
-  localStorage.setItem(THEME_KEY, document.body.classList.contains('light') ? 'light' : 'dark');
+  localStorage.setItem(THEME_KEY, getCurrentTheme());
+  updateThemeControls();
   markSettingsUpdatedAndQueue('theme');
-});
+}
+
+document.getElementById('theme-btn').addEventListener('click', toggleTheme);
 
 // ---- Blog Title ----
 const TITLE_KEY = 'aiblog_blog_title';
@@ -6290,6 +6368,7 @@ function bindLmStudioSettingsModal() {
   document.getElementById('lm-settings-overlay')?.addEventListener('click', e => {
     if (e.target === document.getElementById('lm-settings-overlay')) closeLmSettingsModal();
   });
+  document.getElementById('settings-theme-toggle-btn')?.addEventListener('click', toggleTheme);
   document.getElementById('lm-settings-save-btn')?.addEventListener('click', () => {
     saveLmStudioSettingsFromUI();
     saveCloudSettingsFromUI();
@@ -6872,6 +6951,7 @@ function saveCloudSettingsFromUI() {
 
 function openLmSettingsModal() {
   syncLmStudioSettingsUI();
+  updateThemeControls();
   document.getElementById('lm-settings-overlay')?.classList.add('open');
 }
 
