@@ -5,6 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AI Blog</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23e94560'/><text x='16' y='27' font-family='sans-serif' font-size='21' font-weight='900' text-anchor='middle' fill='white'>B</text><line x1='9' y1='5' x2='23' y2='5' stroke='white' stroke-width='2.5' stroke-linecap='round'/></svg>">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#e94560">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="AI Blog">
   <script src="https://cdn.jsdelivr.net/npm/marked@9/marked.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11/styles/atom-one-dark.min.css">
@@ -3634,16 +3640,23 @@
 
     @media (max-width: 720px) {
       body { height: 100dvh; }
-      #header {
-        gap: 8px;
-        padding: 8px;
+      #header,
+      body.light #header {
+        gap: 6px;
+        min-height: 0;
+        padding: 5px 6px;
       }
       #header-title-wrapper {
         flex: 1 1 auto;
         order: 0;
         width: auto;
       }
-      #header h1 { font-size: 17px; }
+      #header h1,
+      body.light #header h1 {
+        font-size: 16px;
+        line-height: 1.15;
+        margin: 0;
+      }
       #search-wrapper {
         flex: 1 1 100%;
         order: 10;
@@ -3652,17 +3665,18 @@
       body.mobile-search-open #search-wrapper {
         display: block;
       }
-      #search-input {
-        height: 34px;
-        padding: 6px 12px;
+      #search-input,
+      body.light #search-input {
+        height: 32px;
+        padding: 5px 10px;
       }
       #mobile-search-toggle-btn {
         align-items: center;
         display: inline-flex;
         justify-content: center;
-        min-height: 34px;
-        min-width: 34px;
-        padding: 6px 8px;
+        min-height: 30px;
+        min-width: 30px;
+        padding: 4px 7px;
       }
       body.mobile-search-open #mobile-search-toggle-btn {
         border-color: var(--blog-accent);
@@ -3673,8 +3687,8 @@
         display: none !important;
       }
       #lm-settings-header-btn {
-        min-height: 34px;
-        padding: 6px 9px;
+        min-height: 30px;
+        padding: 4px 8px;
       }
       #cloud-status,
       #entry-count {
@@ -3718,14 +3732,14 @@
       body.light #article-list-header {
         box-sizing: border-box;
         font-size: 12px;
-        min-height: 32px;
-        padding: 4px 8px;
+        min-height: 30px;
+        padding: 3px 7px 4px;
       }
       .article-list-heading {
         flex: 1 1 auto;
         flex-wrap: nowrap;
         font-size: 12px;
-        gap: 6px;
+        gap: 7px;
         line-height: 1.2;
         min-width: 0;
         width: auto;
@@ -3737,10 +3751,10 @@
       body.light #tag-filter-select {
         flex: 1;
         font-size: 11px;
-        height: 28px;
+        height: 26px;
         max-width: 48vw;
         min-width: 0;
-        padding: 0 24px 0 8px;
+        padding: 0 22px 0 8px;
       }
       #resizer-right {
         display: none;

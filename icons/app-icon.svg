@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="AI Blog">
+  <rect width="512" height="512" fill="#e94560"/>
+  <rect x="76" y="54" width="360" height="404" rx="44" fill="#e94560" stroke="#ffffff" stroke-width="20"/>
+  <line x1="120" y1="83" x2="120" y2="429" stroke="#ffffff" stroke-width="18" stroke-linecap="round" opacity="0.92"/>
+  <line x1="158" y1="104" x2="356" y2="104" stroke="#ffffff" stroke-width="28" stroke-linecap="round"/>
+  <line x1="168" y1="140" x2="336" y2="140" stroke="#ffffff" stroke-width="12" stroke-linecap="round" opacity="0.78"/>
+  <text x="278" y="402" font-family="Arial, Helvetica, sans-serif" font-size="274" font-weight="900" text-anchor="middle" fill="#ffffff">B</text>
+</svg>
