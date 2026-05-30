@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="AI Blog の取扱説明書。記事作成、Markdown編集、パレット、LM Studio AI補助、Supabase Cloud同期、スマホ表示、データ仕様、トラブル対応を説明します。">
+  <meta name="manual:app" content="AI Blog">
+  <meta name="manual:updated" content="2026-05-30">
+  <meta name="manual:audience" content="human, ai">
+  <title>AI Blog 取扱説明書</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f7fb;
+      --panel: #ffffff;
+      --panel-soft: #eef2f7;
+      --text: #172033;
+      --muted: #5f6b7a;
+      --border: #d8dee8;
+      --accent: #e94560;
+      --accent-2: #2f75b5;
+      --ok: #177245;
+      --warn: #b86b00;
+      --code-bg: #111827;
+      --code-text: #e5e7eb;
+      --shadow: 0 14px 32px rgba(23, 32, 51, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.75;
+      letter-spacing: 0;
+    }
+
+    a { color: var(--accent-2); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+      min-height: 100vh;
+    }
+
+    aside {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow: auto;
+      padding: 22px 18px;
+      border-right: 1px solid var(--border);
+      background: var(--panel);
+    }
+
+    .brand {
+      display: grid;
+      gap: 6px;
+      margin-bottom: 20px;
+    }
+    .brand strong {
+      color: var(--accent);
+      font-size: 1.05rem;
+      line-height: 1.3;
+    }
+    .brand span {
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
+    nav ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 2px;
+    }
+    nav a {
+      display: block;
+      padding: 7px 9px;
+      border-radius: 6px;
+      color: var(--text);
+      font-size: 0.9rem;
+    }
+    nav a:hover {
+      background: var(--panel-soft);
+      text-decoration: none;
+    }
+
+    main {
+      width: min(1120px, 100%);
+      padding: 34px clamp(18px, 4vw, 52px) 80px;
+    }
+
+    header.hero {
+      padding: 28px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+    .eyebrow {
+      color: var(--accent);
+      font-size: 0.82rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+    h1, h2, h3 {
+      line-height: 1.35;
+      letter-spacing: 0;
+    }
+    h1 {
+      margin: 6px 0 12px;
+      font-size: clamp(2rem, 4vw, 3.1rem);
+    }
+    h2 {
+      margin: 42px 0 14px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+      font-size: 1.55rem;
+    }
+    h3 {
+      margin: 28px 0 10px;
+      font-size: 1.12rem;
+    }
+    p { margin: 0 0 13px; }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 22px;
+    }
+    .summary div,
+    .card,
+    .callout,
+    details {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+    .summary div {
+      padding: 14px;
+    }
+    .summary b {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--text);
+    }
+    .summary span,
+    .muted {
+      color: var(--muted);
+    }
+
+    section { scroll-margin-top: 18px; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+    .card {
+      padding: 16px;
+    }
+    .card h3 {
+      margin-top: 0;
+    }
+
+    .callout {
+      margin: 16px 0;
+      padding: 14px 16px;
+      border-left: 4px solid var(--accent-2);
+    }
+    .callout.warn { border-left-color: var(--warn); }
+    .callout.ok { border-left-color: var(--ok); }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 14px 0 22px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    th, td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      background: var(--panel-soft);
+      font-weight: 700;
+    }
+    tr:last-child td { border-bottom: none; }
+
+    code, kbd {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.92em;
+    }
+    code {
+      padding: 0.12em 0.35em;
+      border-radius: 4px;
+      background: var(--panel-soft);
+    }
+    pre {
+      overflow: auto;
+      padding: 14px;
+      border-radius: 8px;
+      background: var(--code-bg);
+      color: var(--code-text);
+    }
+    pre code {
+      padding: 0;
+      background: transparent;
+      color: inherit;
+    }
+    kbd {
+      display: inline-block;
+      min-width: 1.7em;
+      padding: 0 0.45em;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      background: var(--panel);
+      box-shadow: inset 0 -1px 0 rgba(0,0,0,0.08);
+      text-align: center;
+      line-height: 1.6;
+    }
+
+    ol, ul { padding-left: 1.4rem; }
+    li { margin: 4px 0; }
+
+    details {
+      margin: 12px 0;
+      padding: 0 14px;
+    }
+    summary {
+      cursor: pointer;
+      padding: 12px 0;
+      font-weight: 700;
+    }
+    details > div {
+      padding: 0 0 14px;
+    }
+
+    .flow {
+      display: grid;
+      gap: 10px;
+      margin: 14px 0;
+    }
+    .step {
+      display: grid;
+      grid-template-columns: 36px minmax(0, 1fr);
+      gap: 12px;
+      align-items: start;
+    }
+    .step-number {
+      display: grid;
+      place-items: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #fff;
+      font-weight: 700;
+    }
+
+    .machine-block {
+      border: 1px dashed #9aa7b8;
+      background: #fbfcff;
+    }
+
+    footer {
+      margin-top: 48px;
+      padding-top: 18px;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 860px) {
+      .layout { display: block; }
+      aside {
+        position: static;
+        height: auto;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+      }
+      nav ul {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      main { padding: 22px 16px 56px; }
+      .summary, .grid { grid-template-columns: 1fr; }
+      header.hero { padding: 20px; }
+    }
+
+    @media print {
+      aside { display: none; }
+      .layout { display: block; }
+      main { width: 100%; padding: 0; }
+      header.hero, .card, .callout, details, table { box-shadow: none; }
+      a { color: inherit; text-decoration: underline; }
+    }
+  </style>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    "headline": "AI Blog 取扱説明書",
+    "dateModified": "2026-05-30",
+    "inLanguage": "ja",
+    "about": {
+      "@type": "SoftwareApplication",
+      "name": "AI Blog",
+      "applicationCategory": "Blog editor",
+      "operatingSystem": "Web browser"
+    },
+    "audience": [
+      {"@type": "Audience", "audienceType": "human user"},
+      {"@type": "Audience", "audienceType": "AI agent"}
+    ]
+  }
+  </script>
+</head>
+<body>
+  <div class="layout">
+    <aside>
+      <div class="brand">
+        <strong>AI Blog</strong>
+        <span>取扱説明書 / HTML版<br>更新日: 2026-05-30</span>
+      </div>
+      <nav aria-label="目次">
+        <ul>
+          <li><a href="#overview">概要</a></li>
+          <li><a href="#quick-start">起動と初期設定</a></li>
+          <li><a href="#screen">画面構成</a></li>
+          <li><a href="#articles">記事一覧と詳細</a></li>
+          <li><a href="#editing">作成・編集・削除</a></li>
+          <li><a href="#markdown">Markdownと画像</a></li>
+          <li><a href="#tags">タグ・検索・ピン</a></li>
+          <li><a href="#palette">パレット</a></li>
+          <li><a href="#ai-assist">AI補助</a></li>
+          <li><a href="#lmstudio">LM Studio設定</a></li>
+          <li><a href="#cloud">Cloud同期</a></li>
+          <li><a href="#mobile">スマホ表示</a></li>
+          <li><a href="#import-export">import / export</a></li>
+          <li><a href="#data-model">データ仕様</a></li>
+          <li><a href="#troubleshooting">トラブル対応</a></li>
+          <li><a href="#ai">AI向け要約</a></li>
+        </ul>
+      </nav>
+    </aside>
+
+    <main>
+      <header class="hero" id="overview">
+        <div class="eyebrow">Manual</div>
+        <h1>AI Blog 取扱説明書</h1>
+        <p>
+          AI Blog は、ブラウザで動くシングルファイルのブログ閲覧・編集アプリです。
+          記事の作成、Markdown編集、タグ絞り込み、パレット管理、JSON import / export、Supabase Cloud同期、LM Studioを使ったAI補助を利用できます。
+        </p>
+        <p>
+          このHTML版は、人間が読みやすい章立てと、AIが仕様を抽出しやすい構造化セクションを両方含みます。
+        </p>
+        <div class="summary" aria-label="主要ポイント">
+          <div><b>単体で動作</b><span><code>ai-blog.html</code> を開くだけで、ローカル保存型のブログとして使えます。</span></div>
+          <div><b>同期は任意</b><span>Supabase URL、anon key、共有IDを設定した場合だけ記事と基本設定を同期します。</span></div>
+          <div><b>AI補助も任意</b><span>LM Studioを有効にしたPCブラウザだけで、文章作成、読者メモ、保存後コメントを生成します。</span></div>
+        </div>
+      </header>
+
+      <section id="quick-start">
+        <h2>起動と初期設定</h2>
+        <div class="grid">
+          <article class="card">
+            <h3>ローカルだけで使う</h3>
+            <ol>
+              <li><code>output/ai-blog/ai-blog.html</code> をブラウザで開きます。</li>
+              <li>既存データがある場合はヘッダーの <strong>import</strong> からJSONを読み込みます。</li>
+              <li>新しい記事を書く場合は Articles 見出し右側の <strong>+</strong> を押します。</li>
+              <li>記事、テーマ、表示モード、下書きなどはこのブラウザの <code>localStorage</code> に保存されます。</li>
+            </ol>
+          </article>
+          <article class="card">
+            <h3>Cloud同期とAI補助を使う</h3>
+            <ol>
+              <li>ヘッダー右側の歯車ボタンを押して設定を開きます。</li>
+              <li>Cloud同期を使う場合は、Supabase URL、anon key、共有IDを入力します。</li>
+              <li>AI補助を使う場合は、LM Studio を起動し、<strong>LM Studio を使用する</strong> をオンにします。</li>
+              <li><strong>保存</strong> または <strong>同期</strong> を押します。</li>
+            </ol>
+          </article>
+        </div>
+        <div class="callout warn">
+          <strong>注意:</strong> Supabaseの共有IDはパスワードではありません。Supabase URL、anon key、共有IDを知っている人は同じデータを読み書きできます。
+          個人利用・限定共有向けの設計です。
+        </div>
+      </section>
+
+      <section id="screen">
+        <h2>画面構成</h2>
+        <pre><code>┌────────────────────────────────────────────────────────────────────┐
+│ ブログタイトル  検索  import  export  設定  sync/local  件数       │
+├──────────────┬──────────────────────────────┬──────────────────────┤
+│ Tags         │ Articles / タグ絞り込み / + / │ 記事詳細・編集画面   │
+│ サイドバー   │ パレットギャラリー             │                      │
+└──────────────┴──────────────────────────────┴──────────────────────┘
+┌────────────────────────────────────────────────────────────────────┐
+│ j 次 / k 前 / o 開く / e 編集 / p ピン留め / / 検索 / テーマ切替   │
+└────────────────────────────────────────────────────────────────────┘</code></pre>
+        <table>
+          <thead><tr><th>エリア</th><th>役割</th></tr></thead>
+          <tbody>
+            <tr><td>ヘッダー</td><td>ブログタイトル、検索欄、import / export、設定、Cloud同期状態、記事件数を表示します。</td></tr>
+            <tr><td>Tagsサイドバー</td><td>すべて、ピン留め、タグなし、各タグで記事を絞り込みます。</td></tr>
+            <tr><td>Articles</td><td>記事カード一覧、タグドロップダウン、新規作成、パレットギャラリーを操作します。</td></tr>
+            <tr><td>右ペイン</td><td>選択した記事の詳細表示、または編集フォームを表示します。</td></tr>
+            <tr><td>下部バー</td><td>PC表示でキーボードショートカットとライト / ダークモード切替を表示します。</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="articles">
+        <h2>記事一覧と詳細</h2>
+        <p>初期表示では、記事一覧が240から280px前後のコンパクトな統一タイルで折り返し表示されます。</p>
+        <ul>
+          <li>各タイルには日付、タグ、タイトル、画像、本文抜粋が表示されます。</li>
+          <li>本文中の最初の画像をサムネイルとして使います。</li>
+          <li>画像がない記事は画像欄を取らず、テキスト主体のタイルとして表示します。</li>
+          <li>タイトルが空の記事は <code>Untitled</code> と表示されます。</li>
+          <li>画像なし記事ではタイトル領域を固定し、本文抜粋の開始位置を揃えます。</li>
+          <li>Palette が設定された記事は、カード最下部にカラーストリップが表示されます。</li>
+          <li>記事タイルとパレットカードは、クリックに加えて <kbd>Enter</kbd> / <kbd>Space</kbd> でも選択できます。</li>
+        </ul>
+        <p>記事を選択すると、一覧を隠して読み物ページ風の詳細表示が開きます。詳細表示の <strong>← Articles</strong>、または画面上部のブログタイトルをクリックすると一覧へ戻れます。</p>
+      </section>
+
+      <section id="editing">
+        <h2>作成・編集・削除</h2>
+        <div class="grid">
+          <article class="card">
+            <h3>新規記事</h3>
+            <ol>
+              <li>Articles 見出し右側の <strong>+</strong> を押します。</li>
+              <li>Title、URL、Tags、本文を入力します。</li>
+              <li>必要に応じて Palette やAI補助を使います。</li>
+              <li>保存ボタンを押して保存します。</li>
+            </ol>
+            <p class="muted">選択中の通常タグがある場合、新規記事にはそのタグが引き継がれます。</p>
+          </article>
+          <article class="card">
+            <h3>編集と削除</h3>
+            <ol>
+              <li>記事詳細画面の編集ボタン、または <kbd>e</kbd> で編集します。</li>
+              <li>保存ボタンで保存し、キャンセルボタンまたは <kbd>Esc</kbd> で編集を終了します。</li>
+              <li>削除する場合は編集画面の削除ボタンを押し、確認ダイアログでOKを押します。</li>
+            </ol>
+            <p class="muted">保存するたびに <code>updatedAt</code> が自動記録されます。</p>
+          </article>
+        </div>
+
+        <h3>URL・Tags欄</h3>
+        <ul>
+          <li><strong>▸ URL・Tags</strong> / <strong>▾ URL・Tags</strong> で展開・折りたたみできます。</li>
+          <li>URLまたはTagsが入力済みの記事では、編集画面を開いた時に自動で展開します。</li>
+          <li>折りたたみ時は <code>URLあり</code> / <code>Tags N件</code> / <code>未設定</code> の状態バッジを表示します。</li>
+          <li>折りたたんでも入力値は保持され、保存、下書き保存、AI補助の参照内容には影響しません。</li>
+        </ul>
+      </section>
+
+      <section id="markdown">
+        <h2>Markdownと画像</h2>
+        <p>本文はMarkdownで記述できます。保存後はレンダリングされたプレビューとして表示され、コードブロックはシンタックスハイライト付きで表示されます。</p>
+        <table>
+          <thead><tr><th>記法</th><th>表示</th></tr></thead>
+          <tbody>
+            <tr><td><code># 見出し</code></td><td>見出し</td></tr>
+            <tr><td><code>**太字**</code></td><td>太字</td></tr>
+            <tr><td><code>*斜体*</code></td><td>斜体</td></tr>
+            <tr><td><code>~~取り消し~~</code></td><td>取り消し線</td></tr>
+            <tr><td><code>`コード`</code></td><td>インラインコード</td></tr>
+            <tr><td><code>- リスト項目</code></td><td>箇条書き</td></tr>
+            <tr><td><code>[テキスト](URL)</code></td><td>リンク</td></tr>
+            <tr><td><code>![alt](URL)</code></td><td>画像</td></tr>
+            <tr><td><code>&gt; 引用</code></td><td>引用</td></tr>
+          </tbody>
+        </table>
+        <h3>スプリットプレビュー</h3>
+        <p>通常編集画面では、本文欄右上の <strong>⊡ Split</strong> でテキストエリアとプレビューを左右に表示できます。編集を保存またはキャンセルすると、編集のみの状態に戻ります。</p>
+        <h3>画像の挿入</h3>
+        <ol>
+          <li>URL欄にページURLを入力します。</li>
+          <li>URL欄右端の画像取得ボタンを押します。</li>
+          <li>表示された画像候補から使いたい画像を選びます。</li>
+          <li>テキストエリアのカーソル位置に <code>![](画像URL)</code> が挿入されます。</li>
+        </ol>
+        <p class="muted">画像取得は外部ページへのアクセスとCORSプロキシに依存します。取得できない場合は、画像URLを本文へ直接貼り付けてください。</p>
+      </section>
+
+      <section id="tags">
+        <h2>タグ・検索・ピン</h2>
+        <div class="grid">
+          <article class="card">
+            <h3>検索</h3>
+            <ul>
+              <li>ヘッダーの検索欄でタイトル、タグ、本文を検索できます。</li>
+              <li><kbd>/</kbd> で検索欄にフォーカスできます。</li>
+              <li>入力中に記事一覧がリアルタイムで絞り込まれます。</li>
+            </ul>
+          </article>
+          <article class="card">
+            <h3>タグ絞り込み</h3>
+            <ul>
+              <li>Tagsサイドバーのタグ名で絞り込みます。</li>
+              <li>Articles見出し横のドロップダウンでも単一タグを選択できます。</li>
+              <li>サイドバーでは Shift+クリックで複数タグをOR条件として選択できます。</li>
+            </ul>
+          </article>
+        </div>
+        <h3>特殊フィルタ</h3>
+        <table>
+          <thead><tr><th>フィルタ</th><th>動作</th></tr></thead>
+          <tbody>
+            <tr><td>すべて</td><td>全記事を表示します。</td></tr>
+            <tr><td>ピン留め</td><td>ピン留めした記事のみ表示します。</td></tr>
+            <tr><td>タグなし</td><td>タグが設定されていない記事のみ表示します。</td></tr>
+          </tbody>
+        </table>
+        <p>記事詳細のピンボタン、または <kbd>p</kbd> でピン留めを切り替えられます。ピン留め記事は一覧で優先表示され、JSON exportにも含まれます。</p>
+      </section>
+
+      <section id="palette">
+        <h2>パレット</h2>
+        <p>記事ごとに最大7色の Palette を保存できます。</p>
+        <ul>
+          <li>編集画面の <strong>▸ Palette</strong> でパレット欄を展開できます。</li>
+          <li>カラーピッカーまたはHEX入力で色を設定できます。</li>
+          <li>URL欄にページURLがある場合、抽出ボタンでページ由来の色候補を取得できます。</li>
+          <li>Palette が設定された記事は、記事詳細や記事カードにカラーバーが表示されます。</li>
+        </ul>
+        <h3>パレットギャラリー</h3>
+        <p>Articles 見出し右側のパレットボタンで、Palette が設定された記事だけを一覧表示できます。カラーブロックをクリックすると、その色を画面いっぱいに表示します。</p>
+        <p>ギャラリー表示中は、背景色を暗め・基準・明るめの3段階で切り替えられます。背景色の選択は <code>localStorage</code> に保存されます。</p>
+      </section>
+
+      <section id="ai-assist">
+        <h2>AI補助</h2>
+        <p>編集画面の Palette 欄の下に <strong>AI補助</strong> パネルがあります。ヘッダーの設定で <strong>LM Studio を使用する</strong> がオンの場合だけ表示されます。</p>
+        <table>
+          <thead><tr><th>機能</th><th>内容</th></tr></thead>
+          <tbody>
+            <tr><td>文章作成</td><td>入力した材料をもとに、日記形式または論考形式の本文案を生成します。</td></tr>
+            <tr><td>読者目線のメモ</td><td>改善するとよい点、もう少し知りたい点、疑問に思う点を短い箇条書きで表示します。</td></tr>
+            <tr><td>保存後コメント</td><td>記事保存後に短いポジティブコメントを生成し、必要な場合だけ本文末尾へ追記できます。</td></tr>
+          </tbody>
+        </table>
+        <ul>
+          <li>AI補助欄は通常、1行のバーだけで表示されます。</li>
+          <li><strong>▸ AI補助</strong> / <strong>▾ AI補助</strong> の文字で展開・折りたたみできます。</li>
+          <li>生成は明示的に <strong>生成</strong> または <strong>文章生成</strong> を押した時だけ実行されます。</li>
+          <li>生成結果は自動挿入・自動保存されません。</li>
+          <li>スマホ表示ではLM Studio関連UIとAI補助パネルは非表示です。</li>
+        </ul>
+
+        <h3>文章作成</h3>
+        <ol>
+          <li><strong>文章作成</strong> タブを開きます。</li>
+          <li>材料欄に出来事、キーワード、主張などを入力します。</li>
+          <li><strong>日記形式</strong> または <strong>論考形式</strong> を選びます。</li>
+          <li><strong>文章生成</strong> を押します。</li>
+          <li>必要な場合だけ <strong>本文末尾へ追加</strong> を押します。</li>
+        </ol>
+        <p>日記形式は500から900字程度、論考形式は700から1100字程度が目安です。材料欄は最大1500字で、800字を超えると注意表示になります。</p>
+
+        <h3>保存後コメント</h3>
+        <p>LM Studio が有効で、設定の <strong>記事保存後にコメントを生成する</strong> がオンの場合、記事保存後に短いコメントを生成します。<strong>コメントを保存</strong> を押した場合だけ、本文末尾に <code>comment: 生成コメント</code> の形式で追記して保存します。</p>
+      </section>
+
+      <section id="lmstudio">
+        <h2>LM Studio設定</h2>
+        <p>LM Studio を起動してローカルAPIサーバーを開始しておくと、PCブラウザでAI補助を使えます。</p>
+        <ol>
+          <li>LM Studio の Developer 画面で <strong>Start server</strong> を有効にします。</li>
+          <li>必要なモデルをロードします。</li>
+          <li>AI Blog の歯車ボタンをクリックします。</li>
+          <li><strong>LM Studio を使用する</strong> にチェックを入れます。</li>
+          <li>Base URL に <code>http://localhost:1234/v1</code> を入力します。</li>
+          <li>Model欄は空欄でも構いません。空欄の場合は <code>/v1/models</code> の先頭モデルを使います。</li>
+          <li>LM Studio側でAPI token認証を有効にしている場合は、API Token欄に入力します。</li>
+          <li><strong>接続テスト</strong> でモデル取得と短い生成を確認します。</li>
+        </ol>
+        <p>推奨モデルは <code>google/gemma-4-31b</code> です。<code>google/gemma-4-e2b</code> でも読者コメント生成まで動作確認済みです。</p>
+        <h3>診断コード</h3>
+        <table>
+          <thead><tr><th>診断コード</th><th>意味</th></tr></thead>
+          <tbody>
+            <tr><td><code>DISABLED</code></td><td>LM Studio設定がオフです。</td></tr>
+            <tr><td><code>EMPTY_BODY</code></td><td>本文がないため生成を実行しません。</td></tr>
+            <tr><td><code>TIMEOUT</code></td><td>生成または通信がタイムアウトしました。</td></tr>
+            <tr><td><code>EMPTY_RESPONSE</code></td><td>LM Studioから本文として使える応答が返りません。</td></tr>
+            <tr><td><code>JSON_PARSE</code></td><td>期待した形式として解釈できません。</td></tr>
+            <tr><td><code>FETCH_ERROR</code></td><td>ブラウザからLM Studioへ接続できません。</td></tr>
+            <tr><td><code>HTTP_400</code> など</td><td>LM Studio APIがHTTPエラーを返しました。</td></tr>
+          </tbody>
+        </table>
+        <div class="callout warn">
+          API Token はこのブラウザの <code>localStorage</code> に保存されます。共有PCでは入力しないでください。
+        </div>
+      </section>
+
+      <section id="cloud">
+        <h2>Supabase Cloud同期</h2>
+        <p>設定モーダルの <strong>Cloud 同期</strong> に Supabase URL、anon key、共有IDを入力すると、記事と基本設定を複数端末で同期できます。事前に <code>output/ai-blog/supabase-schema.sql</code> を Supabase SQL Editor で実行してください。</p>
+        <h3>同期されるもの</h3>
+        <table>
+          <thead><tr><th>対象</th><th>Supabaseテーブル</th><th>内容</th></tr></thead>
+          <tbody>
+            <tr><td>記事</td><td><code>ai_blog_entries</code></td><td>記事本文、タイトル、URL、domain、tags、palette、pinned、savedAt、updatedAt</td></tr>
+            <tr><td>基本設定</td><td><code>ai_blog_settings</code></td><td>ブログタイトル、テーマ、表示モード、パレット背景</td></tr>
+          </tbody>
+        </table>
+        <h3>同期されないもの</h3>
+        <p>LM Studio の Base URL、Model、API Token、MBTI設定、下書き、検索語、選択中記事、パネル幅、生成キャッシュ、診断表示は同期しません。</p>
+        <h3>初回同期</h3>
+        <ul>
+          <li>Cloud設定を入れて <strong>同期</strong> または <strong>保存</strong> を押すと、ローカル記事とクラウド記事をIDでマージします。</li>
+          <li>同じ <code>id</code> の記事は <code>updatedAt</code> が新しい方を採用します。</li>
+          <li>片方にしかない記事は残します。</li>
+          <li>マージ後の状態を <code>localStorage</code> と Supabase の両方へ保存します。</li>
+          <li>削除済み記事は、同期保存時にクラウド側の不要IDとして削除されます。</li>
+        </ul>
+        <div class="callout">
+          複数端末で使う場合は、最初に基準にしたい端末で同期し、その後に他端末で同じ Supabase URL、anon key、共有IDを入力してください。
+        </div>
+      </section>
+
+      <section id="mobile">
+        <h2>スマホ表示</h2>
+        <p>スマホ幅では、一覧と詳細が横スライド式になります。記事をタップすると詳細画面が開き、<strong>← Articles</strong> で一覧へ戻ります。</p>
+        <ul>
+          <li>記事一覧は区切り線型のリスト表示になります。</li>
+          <li>画像がある記事は右側に固定サイズのサムネイルを表示します。</li>
+          <li>詳細と編集は1カラムで表示します。</li>
+          <li>保存、キャンセル、削除ボタンはタップしやすいサイズになります。</li>
+          <li>LM Studio設定ボタンとAI補助パネルは表示しません。</li>
+        </ul>
+      </section>
+
+      <section id="import-export">
+        <h2>import / export</h2>
+        <p>ヘッダーの <strong>import</strong> でJSONを読み込み、<strong>export</strong> で現在の記事データをJSONとして保存できます。exportファイル名は <code>aiblog-export-YYYY-MM-DD.json</code> です。</p>
+        <table>
+          <thead><tr><th>項目</th><th>内容</th></tr></thead>
+          <tbody>
+            <tr><td><code>id</code></td><td>記事ID</td></tr>
+            <tr><td><code>title</code></td><td>タイトル</td></tr>
+            <tr><td><code>url</code></td><td>元URL</td></tr>
+            <tr><td><code>domain</code></td><td>URLから取得したドメイン</td></tr>
+            <tr><td><code>savedAt</code></td><td>作成・保存日時</td></tr>
+            <tr><td><code>updatedAt</code></td><td>更新日時</td></tr>
+            <tr><td><code>tags</code></td><td>タグ配列</td></tr>
+            <tr><td><code>comment</code></td><td>Markdown本文</td></tr>
+            <tr><td><code>palette</code></td><td>HEXカラー配列</td></tr>
+            <tr><td><code>pinned</code></td><td>ピン留め状態</td></tr>
+          </tbody>
+        </table>
+        <p>AI補助結果、LM Studio設定、画面表示だけの保存後コメント履歴、一時キャッシュ、下書きはJSON exportに含まれません。</p>
+      </section>
+
+      <section id="data-model">
+        <h2>データ仕様</h2>
+        <h3>localStorage</h3>
+        <table>
+          <thead><tr><th>キー</th><th>保存内容</th><th>同期</th></tr></thead>
+          <tbody>
+            <tr><td><code>aiblog_entries</code></td><td>記事一覧</td><td>Cloud設定時に同期対象</td></tr>
+            <tr><td><code>aiblog_blog_title</code></td><td>ブログタイトル</td><td>Cloud設定時に同期対象</td></tr>
+            <tr><td><code>aiblog_theme</code></td><td>ライト / ダークテーマ</td><td>Cloud設定時に同期対象</td></tr>
+            <tr><td><code>aiblog_viewmode</code></td><td>通常 / パレットギャラリー表示</td><td>Cloud設定時に同期対象</td></tr>
+            <tr><td><code>aiblog_pg_bg</code></td><td>パレットギャラリー背景</td><td>Cloud設定時に同期対象</td></tr>
+            <tr><td><code>aiblog-cloud-config</code></td><td>Supabase URL、anon key、共有ID</td><td>同期しない</td></tr>
+            <tr><td><code>aiblog_draft</code></td><td>記事ごとの未保存下書き</td><td>同期しない</td></tr>
+            <tr><td><code>aiblog_lmstudio_*</code></td><td>LM Studio設定、API Token、保存後コメント設定</td><td>同期しない</td></tr>
+            <tr><td><code>aiblog_ai_assist_collapsed</code></td><td>AI補助パネルの折りたたみ状態</td><td>同期しない</td></tr>
+            <tr><td><code>aiblog_col_*</code></td><td>PC表示のパネル幅</td><td>同期しない</td></tr>
+          </tbody>
+        </table>
+        <h3>Supabaseスキーマ</h3>
+        <table>
+          <thead><tr><th>テーブル</th><th>主な列</th><th>用途</th></tr></thead>
+          <tbody>
+            <tr><td><code>ai_blog_entries</code></td><td><code>profile_id</code>, <code>id</code>, <code>title</code>, <code>url</code>, <code>domain</code>, <code>tags</code>, <code>comment</code>, <code>palette</code>, <code>pinned</code>, <code>saved_at</code>, <code>updated_at</code></td><td>記事データ</td></tr>
+            <tr><td><code>ai_blog_settings</code></td><td><code>profile_id</code>, <code>blog_title</code>, <code>theme</code>, <code>view_mode</code>, <code>palette_bg</code>, <code>updated_at</code></td><td>基本設定</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="troubleshooting">
+        <h2>トラブル対応</h2>
+        <details open>
+          <summary>Cloud同期で権限エラーが出る</summary>
+          <div>
+            <p>Supabase SQL Editorで最新版の <code>output/ai-blog/supabase-schema.sql</code> をもう一度実行してください。テーブル作成済みでも、anonロールへの権限やRLS policyが不足している場合があります。</p>
+          </div>
+        </details>
+        <details>
+          <summary>Cloud同期後に記事が期待どおり反映されない</summary>
+          <div>
+            <p>同じ共有IDを使っているか確認してください。同じ記事IDでは <code>updatedAt</code> が新しい方を採用します。どの端末が最新か分からない場合は、基準にしたい端末で先に同期してください。</p>
+          </div>
+        </details>
+        <details>
+          <summary>LM Studioへ接続できない</summary>
+          <div>
+            <p>LM Studio の Developer server が起動しているか、Base URL が <code>http://localhost:1234/v1</code> になっているか確認してください。ブラウザからlocalhostへ直接fetchするため、環境によっては接続が拒否される場合があります。</p>
+          </div>
+        </details>
+        <details>
+          <summary>AI生成が空応答または途中で切れる</summary>
+          <div>
+            <p>Qwen系などの推論系モデルでは <code>reasoning_content</code> だけで出力上限を使うことがあります。Gemma 4系または通常のチャット向けモデルを使うか、材料を短くして再試行してください。</p>
+          </div>
+        </details>
+        <details>
+          <summary>下書きや設定が消えた</summary>
+          <div>
+            <p>ブラウザの <code>localStorage</code> を削除すると、記事、設定、下書きは消えます。重要な記事は定期的にJSON exportしてください。</p>
+          </div>
+        </details>
+      </section>
+
+      <section id="ai">
+        <h2>AI向け要約</h2>
+        <p>このセクションは、AIエージェントが仕様を短時間で把握できるようにした構造化サマリーです。</p>
+        <div class="callout machine-block">
+          <h3>Machine-readable summary</h3>
+          <pre><code>{
+  "app": "AI Blog",
+  "entrypoint": "output/ai-blog/ai-blog.html",
+  "manual": "output/ai-blog/ai-blog-取扱説明書.html",
+  "offlineLocalMode": true,
+  "cloudSync": {
+    "provider": "Supabase REST API",
+    "requiredSettings": ["Supabase URL", "anon key", "profile ID"],
+    "syncedState": ["entries", "blog title", "theme", "view mode", "palette gallery background"],
+    "notSyncedState": ["LM Studio settings", "API token", "MBTI setting", "drafts", "search query", "selected article", "panel width", "generation cache", "diagnostics"],
+    "mergePolicy": "merge by entry id; newer updatedAt wins",
+    "deletePolicy": "cloud rows not present locally become stale and are deleted on sync save"
+  },
+  "aiAssist": {
+    "provider": "local LM Studio OpenAI-compatible API",
+    "baseUrlDefault": "http://localhost:1234/v1",
+    "features": ["reader memo", "draft writing", "positive save comment"],
+    "mobileAvailability": false,
+    "autoInsert": false,
+    "exported": false
+  },
+  "mainLocalStorageKeys": [
+    "aiblog_entries",
+    "aiblog_blog_title",
+    "aiblog_theme",
+    "aiblog_viewmode",
+    "aiblog_pg_bg",
+    "aiblog-cloud-config",
+    "aiblog_draft",
+    "aiblog_lmstudio_*"
+  ],
+  "supabaseTables": [
+    "ai_blog_entries",
+    "ai_blog_settings"
+  ],
+  "primaryUserFlows": [
+    "create/edit/delete blog entry",
+    "filter by tags/search/pinned",
+    "edit Markdown and preview",
+    "manage article palette",
+    "generate text with LM Studio",
+    "sync entries with Supabase",
+    "export/import JSON"
+  ],
+  "riskNotes": [
+    "Supabase anon key plus shared profile ID allows read/write for that profile",
+    "LM Studio API token is stored in localStorage",
+    "drafts and AI generation results are not exported",
+    "smartphone UI hides LM Studio controls"
+  ]
+}</code></pre>
+        </div>
+      </section>
+
+      <footer>
+        <p>関連ファイル: <code>ai-blog.html</code>, <code>supabase-schema.sql</code>, <code>ai-blog-変更履歴.md</code></p>
+        <p>この取扱説明書は、AI Blog の現行実装に合わせて 2026-05-30 にHTML版として再構成しました。</p>
+      </footer>
+    </main>
+  </div>
+</body>
+</html>
