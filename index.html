@@ -1161,14 +1161,21 @@
     }
     .settings-section {
       border-top: 1px solid #1a3a6e;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
       margin-top: 4px;
       padding-top: 12px;
+    }
+    .lm-studio-settings-section {
+      border-top: 0;
+      margin-top: 0;
+      padding-top: 0;
     }
     .settings-section-title {
       color: #f0e040;
       font-size: 12px;
       font-weight: 700;
-      margin-bottom: 10px;
     }
     .cloud-settings-grid {
       display: flex;
@@ -1178,7 +1185,7 @@
     .cloud-settings-grid input {
       width: 100%;
     }
-    #lm-settings-actions {
+    .settings-action-row {
       display: flex;
       gap: 8px;
       justify-content: flex-end;
@@ -3639,7 +3646,9 @@
         order: 10;
       }
       #import-btn,
-      #export-btn,
+      #export-btn {
+        display: none !important;
+      }
       #lm-settings-header-btn {
         min-height: 34px;
         padding: 6px 9px;
@@ -3782,7 +3791,6 @@
         padding: 38px 14px 18px;
         font-size: 16px;
       }
-      #lm-settings-header-btn,
       .ai-assist-panel {
         display: none !important;
       }
@@ -3792,10 +3800,18 @@
       #lm-settings-modal {
         width: 94vw;
       }
-      #lm-settings-actions {
+      .lm-studio-settings-section {
+        display: none !important;
+      }
+      .cloud-settings-section {
+        border-top: 0;
+        margin-top: 0;
+        padding-top: 0;
+      }
+      .settings-action-row {
         flex-wrap: wrap;
       }
-      #lm-settings-actions button {
+      .settings-action-row button {
         min-height: 42px;
       }
       :is(button, a)[data-tooltip]::before,
@@ -3820,7 +3836,7 @@
   <button class="btn-header" id="import-btn">import</button>
   <input id="import-file" type="file" accept=".json" hidden>
   <button class="btn-header" id="export-btn">export</button>
-  <button class="btn-header" id="lm-settings-header-btn" data-tooltip="LM Studio" aria-label="LM Studio設定">⚙</button>
+  <button class="btn-header" id="lm-settings-header-btn" data-tooltip="設定" aria-label="設定">⚙</button>
   <span id="cloud-status">local</span>
   <span id="entry-count"></span>
 </div>
@@ -4150,54 +4166,60 @@
 <div id="lm-settings-overlay">
   <div id="lm-settings-modal">
     <div id="lm-settings-header">
-      <span id="lm-settings-title">LM Studio 設定</span>
+      <span id="lm-settings-title">設定</span>
       <button id="lm-settings-close" type="button">✕</button>
     </div>
     <div id="lm-settings-body">
-      <label id="lm-settings-enabled-row">
-        <input type="checkbox" id="lm-settings-enabled">
-        <span>LM Studio を使用する</span>
-      </label>
-      <div class="lm-settings-row">
-        <label for="lm-settings-base-url">Base URL</label>
-        <input class="ai-lm-input" id="lm-settings-base-url" type="url" placeholder="http://localhost:1234/v1">
-      </div>
-      <div class="lm-settings-row">
-        <label for="lm-settings-model">Model</label>
-        <input class="ai-lm-input" id="lm-settings-model" type="text" placeholder="空なら /v1/models の先頭を使用">
-      </div>
-      <div class="lm-settings-row">
-        <label for="lm-settings-api-token">API Token</label>
-        <input class="ai-lm-input" id="lm-settings-api-token" type="password" autocomplete="off" placeholder="認証を有効にした場合のみ入力">
-      </div>
-      <label id="lm-positive-enabled-row">
-        <input type="checkbox" id="lm-positive-enabled">
-        <span>記事保存後にコメントを生成する</span>
-      </label>
-      <div class="lm-mbti-field">
-        <div class="lm-mbti-label">コメントのMBTIタイプ</div>
-        <div class="lm-mbti-grid" role="radiogroup" aria-label="保存後コメントのMBTIタイプ">
-          <label class="lm-mbti-option"><input type="radio" name="lm-positive-mbti" value="ISTJ"><span>ISTJ</span></label>
-          <label class="lm-mbti-option"><input type="radio" name="lm-positive-mbti" value="ISFJ"><span>ISFJ</span></label>
-          <label class="lm-mbti-option"><input type="radio" name="lm-positive-mbti" value="INFJ"><span>INFJ</span></label>
-          <label class="lm-mbti-option"><input type="radio" name="lm-positive-mbti" value="INTJ"><span>INTJ</span></label>
-          <label class="lm-mbti-option"><input type="radio" name="lm-positive-mbti" value="ISTP"><span>ISTP</span></label>
-          <label class="lm-mbti-option"><input type="radio" name="lm-positive-mbti" value="ISFP"><span>ISFP</span></label>
-          <label class="lm-mbti-option"><input type="radio" name="lm-positive-mbti" value="INFP"><span>INFP</span></label>
-          <label class="lm-mbti-option"><input type="radio" name="lm-positive-mbti" value="INTP"><span>INTP</span></label>
-          <label class="lm-mbti-option"><input type="radio" name="lm-positive-mbti" value="ESTP"><span>ESTP</span></label>
-          <label class="lm-mbti-option"><input type="radio" name="lm-positive-mbti" value="ESFP"><span>ESFP</span></label>
-          <label class="lm-mbti-option"><input type="radio" name="lm-positive-mbti" value="ENFP"><span>ENFP</span></label>
-          <label class="lm-mbti-option"><input type="radio" name="lm-positive-mbti" value="ENTP"><span>ENTP</span></label>
-          <label class="lm-mbti-option"><input type="radio" name="lm-positive-mbti" value="ESTJ"><span>ESTJ</span></label>
-          <label class="lm-mbti-option"><input type="radio" name="lm-positive-mbti" value="ESFJ"><span>ESFJ</span></label>
-          <label class="lm-mbti-option"><input type="radio" name="lm-positive-mbti" value="ENFJ"><span>ENFJ</span></label>
-          <label class="lm-mbti-option"><input type="radio" name="lm-positive-mbti" value="ENTJ"><span>ENTJ</span></label>
+      <div class="settings-section lm-studio-settings-section">
+        <div class="settings-section-title">LM Studio設定</div>
+        <label id="lm-settings-enabled-row">
+          <input type="checkbox" id="lm-settings-enabled">
+          <span>LM Studio を使用する</span>
+        </label>
+        <div class="lm-settings-row">
+          <label for="lm-settings-base-url">Base URL</label>
+          <input class="ai-lm-input" id="lm-settings-base-url" type="url" placeholder="http://localhost:1234/v1">
+        </div>
+        <div class="lm-settings-row">
+          <label for="lm-settings-model">Model</label>
+          <input class="ai-lm-input" id="lm-settings-model" type="text" placeholder="空なら /v1/models の先頭を使用">
+        </div>
+        <div class="lm-settings-row">
+          <label for="lm-settings-api-token">API Token</label>
+          <input class="ai-lm-input" id="lm-settings-api-token" type="password" autocomplete="off" placeholder="認証を有効にした場合のみ入力">
+        </div>
+        <label id="lm-positive-enabled-row">
+          <input type="checkbox" id="lm-positive-enabled">
+          <span>記事保存後にコメントを生成する</span>
+        </label>
+        <div class="lm-mbti-field">
+          <div class="lm-mbti-label">コメントのMBTIタイプ</div>
+          <div class="lm-mbti-grid" role="radiogroup" aria-label="保存後コメントのMBTIタイプ">
+            <label class="lm-mbti-option"><input type="radio" name="lm-positive-mbti" value="ISTJ"><span>ISTJ</span></label>
+            <label class="lm-mbti-option"><input type="radio" name="lm-positive-mbti" value="ISFJ"><span>ISFJ</span></label>
+            <label class="lm-mbti-option"><input type="radio" name="lm-positive-mbti" value="INFJ"><span>INFJ</span></label>
+            <label class="lm-mbti-option"><input type="radio" name="lm-positive-mbti" value="INTJ"><span>INTJ</span></label>
+            <label class="lm-mbti-option"><input type="radio" name="lm-positive-mbti" value="ISTP"><span>ISTP</span></label>
+            <label class="lm-mbti-option"><input type="radio" name="lm-positive-mbti" value="ISFP"><span>ISFP</span></label>
+            <label class="lm-mbti-option"><input type="radio" name="lm-positive-mbti" value="INFP"><span>INFP</span></label>
+            <label class="lm-mbti-option"><input type="radio" name="lm-positive-mbti" value="INTP"><span>INTP</span></label>
+            <label class="lm-mbti-option"><input type="radio" name="lm-positive-mbti" value="ESTP"><span>ESTP</span></label>
+            <label class="lm-mbti-option"><input type="radio" name="lm-positive-mbti" value="ESFP"><span>ESFP</span></label>
+            <label class="lm-mbti-option"><input type="radio" name="lm-positive-mbti" value="ENFP"><span>ENFP</span></label>
+            <label class="lm-mbti-option"><input type="radio" name="lm-positive-mbti" value="ENTP"><span>ENTP</span></label>
+            <label class="lm-mbti-option"><input type="radio" name="lm-positive-mbti" value="ESTJ"><span>ESTJ</span></label>
+            <label class="lm-mbti-option"><input type="radio" name="lm-positive-mbti" value="ESFJ"><span>ESFJ</span></label>
+            <label class="lm-mbti-option"><input type="radio" name="lm-positive-mbti" value="ENFJ"><span>ENFJ</span></label>
+            <label class="lm-mbti-option"><input type="radio" name="lm-positive-mbti" value="ENTJ"><span>ENTJ</span></label>
+          </div>
+        </div>
+        <div class="lm-settings-hint">LM Studio のローカルAPIに接続できない場合は、診断を表示します。</div>
+        <div class="settings-action-row">
+          <button class="ai-lm-test" id="lm-settings-test-btn" type="button">接続テスト</button>
         </div>
       </div>
-      <div class="lm-settings-hint">LM Studio のローカルAPIに接続できない場合は、診断を表示します。</div>
-      <div class="settings-section">
-        <div class="settings-section-title">Cloud 同期</div>
+      <div class="settings-section cloud-settings-section">
+        <div class="settings-section-title">Cloud設定</div>
         <div class="cloud-settings-grid">
           <div class="lm-settings-row">
             <label for="cloud-supabase-url-input">Supabase URL</label>
@@ -4213,11 +4235,10 @@
           </div>
           <div class="lm-settings-hint">同じSupabase設定と共有IDを入力した端末間で、記事と基本設定を同期します。LM Studio設定はこのPCだけに保存します。</div>
         </div>
-      </div>
-      <div id="lm-settings-actions">
-        <button class="ai-lm-test" id="cloud-sync-now-btn" type="button">同期</button>
-        <button class="ai-lm-test" id="lm-settings-test-btn" type="button">接続テスト</button>
-        <button class="ai-assist-refresh" id="lm-settings-save-btn" type="button">保存</button>
+        <div class="settings-action-row">
+          <button class="ai-lm-test" id="cloud-sync-now-btn" type="button">同期</button>
+          <button class="ai-assist-refresh" id="lm-settings-save-btn" type="button">保存</button>
+        </div>
       </div>
     </div>
   </div>
@@ -6193,7 +6214,7 @@ function bindLmStudioSettingsModal() {
     saveCloudSettingsFromUI();
     if (hasCloudConfig()) queueCloudSync('settings');
     closeLmSettingsModal();
-    showToast(hasCloudConfig() ? '設定を保存し、同期を有効にしました' : 'LM Studio設定を保存しました', 'success');
+    showToast(hasCloudConfig() ? '設定を保存し、同期を有効にしました' : '設定を保存しました', 'success');
   });
   document.getElementById('cloud-sync-now-btn')?.addEventListener('click', async () => {
     saveCloudSettingsFromUI();
