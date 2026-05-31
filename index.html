@@ -3748,6 +3748,7 @@
         flex: 1;
         display: block;
         overflow: hidden;
+        overscroll-behavior-x: none;
       }
       #main:not(.tile-mode):not(.palette-gallery-mode) {
         display: block;
@@ -3772,9 +3773,25 @@
       #article-list-panel { transform: translateX(0); }
       #detail-panel {
         border-top: none;
-        overscroll-behavior-x: contain;
+        overflow-x: hidden;
+        overscroll-behavior-x: none;
         touch-action: pan-y;
         transform: translateX(100%);
+      }
+      #detail-view {
+        overflow-x: hidden;
+        overscroll-behavior-x: none;
+        touch-action: pan-y;
+      }
+      #detail-content {
+        max-width: calc(100vw - 12px);
+        overflow-x: hidden;
+        overscroll-behavior-x: none;
+        touch-action: pan-y;
+      }
+      #detail-content pre,
+      #detail-content table {
+        max-width: 100%;
       }
       body.mobile-detail-open #article-list-panel { transform: translateX(-24%); }
       body.mobile-detail-open #detail-panel { transform: translateX(0); }
@@ -5775,6 +5792,7 @@ function closeMobileDetail() {
 const MOBILE_VIEWPORT_QUERY = '(max-width: 720px), (max-height: 520px) and (max-width: 980px) and (orientation: landscape)';
 const MOBILE_DETAIL_SWIPE_EDGE_WIDTH = 64;
 const MOBILE_DETAIL_SWIPE_BACK_DISTANCE = 52;
+const MOBILE_DETAIL_SWIPE_LOCK_DISTANCE = 10;
 
 function isMobileViewport() {
   return window.matchMedia(MOBILE_VIEWPORT_QUERY).matches;
@@ -5800,18 +5818,19 @@ function bindMobileDetailSwipeBack() {
   const updateSwipe = (clientX, clientY, onClose) => {
     const dx = clientX - startX;
     const dy = clientY - startY;
+    const horizontalIntent = dx > MOBILE_DETAIL_SWIPE_LOCK_DISTANCE && Math.abs(dx) > Math.abs(dy) * 1.05;
     if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 24) {
       tracking = false;
       activePointerId = null;
-      return false;
+      return { closed: false, lockHorizontal: false };
     }
     if (dx >= MOBILE_DETAIL_SWIPE_BACK_DISTANCE && Math.abs(dx) > Math.abs(dy) * 1.15) {
       tracking = false;
       activePointerId = null;
       onClose();
-      return true;
+      return { closed: true, lockHorizontal: true };
     }
-    return false;
+    return { closed: false, lockHorizontal: horizontalIntent };
   };
 
   detailPanel.addEventListener('pointerdown', e => {
@@ -5830,7 +5849,8 @@ function bindMobileDetailSwipeBack() {
 
   detailPanel.addEventListener('pointermove', e => {
     if (!tracking || e.pointerId !== activePointerId) return;
-    if (updateSwipe(e.clientX, e.clientY, closeMobileDetail)) {
+    const swipe = updateSwipe(e.clientX, e.clientY, closeMobileDetail);
+    if (swipe.lockHorizontal) {
       e.preventDefault();
     }
   });
@@ -5857,7 +5877,8 @@ function bindMobileDetailSwipeBack() {
   detailPanel.addEventListener('touchmove', e => {
     if (!tracking || activePointerId !== 'touch' || e.touches.length !== 1) return;
     const touch = e.touches[0];
-    if (updateSwipe(touch.clientX, touch.clientY, closeMobileDetail)) {
+    const swipe = updateSwipe(touch.clientX, touch.clientY, closeMobileDetail);
+    if (swipe.lockHorizontal) {
       e.preventDefault();
     }
   }, { passive: false });
