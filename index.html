@@ -340,6 +340,9 @@
       overflow: hidden;
       background: #1a1a2e;
     }
+    #mobile-swipe-back-zone {
+      display: none;
+    }
 
     /* Empty state */
     #empty-state {
@@ -3769,12 +3772,26 @@
       #article-list-panel { transform: translateX(0); }
       #detail-panel {
         border-top: none;
+        overscroll-behavior-x: contain;
         touch-action: pan-y;
         transform: translateX(100%);
       }
       body.mobile-detail-open #article-list-panel { transform: translateX(-24%); }
       body.mobile-detail-open #detail-panel { transform: translateX(0); }
       body.mobile-detail-open #header { display: none; }
+      body.mobile-detail-open #mobile-swipe-back-zone {
+        display: block;
+      }
+      #mobile-swipe-back-zone {
+        bottom: 0;
+        left: 0;
+        pointer-events: auto;
+        position: absolute;
+        top: 0;
+        touch-action: pan-y;
+        width: 64px;
+        z-index: 20;
+      }
       #article-list-header,
       body.light #article-list-header {
         box-sizing: border-box;
@@ -4057,6 +4074,7 @@
 
   <!-- Detail / Edit Panel -->
   <div id="detail-panel">
+    <div id="mobile-swipe-back-zone" aria-hidden="true"></div>
 
     <div id="empty-state">
       <div class="icon">📝</div>
@@ -5755,8 +5773,8 @@ function closeMobileDetail() {
 }
 
 const MOBILE_VIEWPORT_QUERY = '(max-width: 720px), (max-height: 520px) and (max-width: 980px) and (orientation: landscape)';
-const MOBILE_DETAIL_SWIPE_EDGE_WIDTH = 36;
-const MOBILE_DETAIL_SWIPE_BACK_DISTANCE = 72;
+const MOBILE_DETAIL_SWIPE_EDGE_WIDTH = 64;
+const MOBILE_DETAIL_SWIPE_BACK_DISTANCE = 52;
 
 function isMobileViewport() {
   return window.matchMedia(MOBILE_VIEWPORT_QUERY).matches;
@@ -5787,7 +5805,7 @@ function bindMobileDetailSwipeBack() {
       activePointerId = null;
       return false;
     }
-    if (dx >= MOBILE_DETAIL_SWIPE_BACK_DISTANCE && Math.abs(dx) > Math.abs(dy) * 1.4) {
+    if (dx >= MOBILE_DETAIL_SWIPE_BACK_DISTANCE && Math.abs(dx) > Math.abs(dy) * 1.15) {
       tracking = false;
       activePointerId = null;
       onClose();
