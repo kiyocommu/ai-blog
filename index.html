@@ -3684,7 +3684,7 @@
       }
     }
 
-    @media (max-width: 720px) {
+    @media (max-width: 720px), (max-height: 520px) and (max-width: 980px) and (orientation: landscape) {
       body { height: 100dvh; }
       #header,
       body.light #header {
@@ -3769,6 +3769,7 @@
       #article-list-panel { transform: translateX(0); }
       #detail-panel {
         border-top: none;
+        touch-action: pan-y;
         transform: translateX(100%);
       }
       body.mobile-detail-open #article-list-panel { transform: translateX(-24%); }
@@ -3928,6 +3929,60 @@
       :is(button, a)[data-tooltip]::after {
         display: none !important;
         content: none !important;
+      }
+    }
+
+    @media (max-height: 520px) and (max-width: 980px) and (orientation: landscape) {
+      #header,
+      body.light #header {
+        padding: 3px 6px;
+      }
+      #header h1,
+      body.light #header h1 {
+        font-size: 15px;
+      }
+      #mobile-search-toggle-btn,
+      #lm-settings-header-btn {
+        min-height: 28px;
+      }
+      #article-list-header,
+      body.light #article-list-header {
+        min-height: 28px;
+        padding: 2px 7px 3px;
+      }
+      #tag-filter-select,
+      body.light #tag-filter-select {
+        height: 24px;
+      }
+      #main:not(.tile-mode):not(.palette-gallery-mode) .article-item {
+        padding: 9px 10px;
+      }
+      .blog-card-body {
+        gap: 4px;
+      }
+      .blog-card-visual {
+        height: 66px;
+      }
+      .blog-card-title {
+        font-size: 14px;
+        line-height: 1.35;
+      }
+      .blog-card-excerpt {
+        -webkit-line-clamp: 1;
+        line-clamp: 1;
+      }
+      #detail-header {
+        padding: 5px 6px 3px;
+      }
+      #detail-title {
+        font-size: 18px;
+        line-height: 1.35;
+      }
+      #detail-content {
+        padding-top: 8px;
+      }
+      #edit-header {
+        padding: 6px;
       }
     }
   </style>
@@ -5699,11 +5754,12 @@ function closeMobileDetail() {
   setPanel('empty');
 }
 
-const MOBILE_DETAIL_SWIPE_EDGE_WIDTH = 24;
+const MOBILE_VIEWPORT_QUERY = '(max-width: 720px), (max-height: 520px) and (max-width: 980px) and (orientation: landscape)';
+const MOBILE_DETAIL_SWIPE_EDGE_WIDTH = 36;
 const MOBILE_DETAIL_SWIPE_BACK_DISTANCE = 72;
 
 function isMobileViewport() {
-  return window.matchMedia('(max-width: 720px)').matches;
+  return window.matchMedia(MOBILE_VIEWPORT_QUERY).matches;
 }
 
 function bindMobileDetailSwipeBack() {
@@ -5715,32 +5771,49 @@ function bindMobileDetailSwipeBack() {
   let startY = 0;
   let tracking = false;
 
-  detailPanel.addEventListener('pointerdown', e => {
+  const canStartSwipe = (target, clientX) => {
     if (!isMobileViewport() || !document.body.classList.contains('mobile-detail-open')) return;
     if (!document.getElementById('detail-view')?.classList.contains('visible')) return;
+    if (clientX > MOBILE_DETAIL_SWIPE_EDGE_WIDTH) return;
+    if (target.closest('button, a, input, textarea, select, label, [role="button"]')) return;
+    return true;
+  };
+
+  const updateSwipe = (clientX, clientY, onClose) => {
+    const dx = clientX - startX;
+    const dy = clientY - startY;
+    if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 24) {
+      tracking = false;
+      activePointerId = null;
+      return false;
+    }
+    if (dx >= MOBILE_DETAIL_SWIPE_BACK_DISTANCE && Math.abs(dx) > Math.abs(dy) * 1.4) {
+      tracking = false;
+      activePointerId = null;
+      onClose();
+      return true;
+    }
+    return false;
+  };
+
+  detailPanel.addEventListener('pointerdown', e => {
     if (e.button !== undefined && e.button !== 0) return;
-    if (e.clientX > MOBILE_DETAIL_SWIPE_EDGE_WIDTH) return;
-    if (e.target.closest('button, a, input, textarea, select')) return;
+    if (!canStartSwipe(e.target, e.clientX)) return;
     activePointerId = e.pointerId;
     startX = e.clientX;
     startY = e.clientY;
     tracking = true;
+    try {
+      detailPanel.setPointerCapture?.(e.pointerId);
+    } catch (err) {
+      // Some WebViews reject capture for edge-origin gestures.
+    }
   });
 
   detailPanel.addEventListener('pointermove', e => {
     if (!tracking || e.pointerId !== activePointerId) return;
-    const dx = e.clientX - startX;
-    const dy = e.clientY - startY;
-    if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 24) {
-      tracking = false;
-      activePointerId = null;
-      return;
-    }
-    if (dx >= MOBILE_DETAIL_SWIPE_BACK_DISTANCE && Math.abs(dx) > Math.abs(dy) * 1.4) {
+    if (updateSwipe(e.clientX, e.clientY, closeMobileDetail)) {
       e.preventDefault();
-      tracking = false;
-      activePointerId = null;
-      closeMobileDetail();
     }
   });
 
@@ -5752,6 +5825,33 @@ function bindMobileDetailSwipeBack() {
 
   detailPanel.addEventListener('pointerup', cancelSwipe);
   detailPanel.addEventListener('pointercancel', cancelSwipe);
+
+  detailPanel.addEventListener('touchstart', e => {
+    if (tracking || e.touches.length !== 1) return;
+    const touch = e.touches[0];
+    if (!canStartSwipe(e.target, touch.clientX)) return;
+    activePointerId = 'touch';
+    startX = touch.clientX;
+    startY = touch.clientY;
+    tracking = true;
+  }, { passive: true });
+
+  detailPanel.addEventListener('touchmove', e => {
+    if (!tracking || activePointerId !== 'touch' || e.touches.length !== 1) return;
+    const touch = e.touches[0];
+    if (updateSwipe(touch.clientX, touch.clientY, closeMobileDetail)) {
+      e.preventDefault();
+    }
+  }, { passive: false });
+
+  const cancelTouchSwipe = () => {
+    if (activePointerId !== 'touch') return;
+    tracking = false;
+    activePointerId = null;
+  };
+
+  detailPanel.addEventListener('touchend', cancelTouchSwipe);
+  detailPanel.addEventListener('touchcancel', cancelTouchSwipe);
 }
 
 // ---- Events ----
@@ -8901,7 +9001,7 @@ document.addEventListener('keydown', e => {
       break;
     case '/':
       e.preventDefault();
-      if (window.matchMedia('(max-width: 720px)').matches) {
+      if (isMobileViewport()) {
         setMobileSearchOpen(true, true);
       } else {
         document.getElementById('search-input').focus();
