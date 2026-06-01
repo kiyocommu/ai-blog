@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>AI Blog</title>
   <link rel="icon" type="image/svg+xml" href="icons/app-icon.svg">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -10,6 +10,7 @@
   <meta name="theme-color" content="#e94560">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="AI Blog">
   <script src="https://cdn.jsdelivr.net/npm/marked@9/marked.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
@@ -18,11 +19,17 @@
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
+    html {
+      height: 100%;
+      background: #1a1a2e;
+    }
+
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       background: #1a1a2e;
       color: #e0e0e0;
-      height: 100vh;
+      height: var(--app-height, 100vh);
+      min-height: 100%;
       display: flex;
       flex-direction: column;
       overflow: hidden;
@@ -2719,6 +2726,10 @@
       --blog-green: #7f9274;
     }
 
+    html {
+      background: var(--blog-bg);
+    }
+
     body,
     body.light {
       font-family: "Helvetica Neue", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -3688,7 +3699,7 @@
     }
 
     @media (max-width: 720px), (max-height: 520px) and (max-width: 980px) and (orientation: landscape) {
-      body { height: 100dvh; }
+      body { height: var(--app-height, 100dvh); }
       #header,
       body.light #header {
         gap: 6px;
@@ -3967,6 +3978,13 @@
     }
 
     @media (max-height: 520px) and (max-width: 980px) and (orientation: landscape) {
+      @supports (padding: max(0px)) {
+        body {
+          padding-top: 0;
+          padding-left: env(safe-area-inset-left);
+          padding-right: env(safe-area-inset-right);
+        }
+      }
       #header,
       body.light #header {
         padding: 3px 6px;
@@ -4945,14 +4963,20 @@ function updateThemeControls() {
   }
 }
 
+function updateDocumentBackground() {
+  document.documentElement.style.background = getCurrentTheme() === 'light' ? '#f7f5f0' : '#171614';
+}
+
 function initTheme() {
   if (localStorage.getItem(THEME_KEY) !== 'dark') document.body.classList.add('light');
+  updateDocumentBackground();
   updateThemeControls();
 }
 
 function toggleTheme() {
   document.body.classList.toggle('light');
   localStorage.setItem(THEME_KEY, getCurrentTheme());
+  updateDocumentBackground();
   updateThemeControls();
   markSettingsUpdatedAndQueue('theme');
 }
@@ -5303,6 +5327,7 @@ function applyCloudSettings(row) {
   const theme = row.theme === 'dark' ? 'dark' : 'light';
   document.body.classList.toggle('light', theme !== 'dark');
   localStorage.setItem(THEME_KEY, theme);
+  updateDocumentBackground();
   const nextView = row.view_mode === 'palette-gallery' ? 'palette-gallery' : 'list';
   localStorage.setItem(VIEW_KEY, nextView);
   viewMode = nextView;
@@ -5794,6 +5819,21 @@ const MOBILE_DETAIL_SWIPE_EDGE_WIDTH = 64;
 const MOBILE_DETAIL_SWIPE_BACK_DISTANCE = 52;
 const MOBILE_DETAIL_SWIPE_LOCK_DISTANCE = 10;
 
+function updateAppViewportHeight() {
+  const viewportHeight = window.visualViewport?.height || window.innerHeight;
+  document.documentElement.style.setProperty('--app-height', `${viewportHeight}px`);
+}
+
+function bindAppViewportHeight() {
+  updateAppViewportHeight();
+  window.addEventListener('resize', updateAppViewportHeight);
+  window.addEventListener('orientationchange', () => {
+    updateAppViewportHeight();
+    setTimeout(updateAppViewportHeight, 250);
+  });
+  window.visualViewport?.addEventListener('resize', updateAppViewportHeight);
+}
+
 function isMobileViewport() {
   return window.matchMedia(MOBILE_VIEWPORT_QUERY).matches;
 }
@@ -5895,6 +5935,7 @@ function bindMobileDetailSwipeBack() {
 
 // ---- Events ----
 function bindEvents() {
+  bindAppViewportHeight();
   bindMobileDetailSwipeBack();
 
   // Tag filter
