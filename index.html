@@ -3979,6 +3979,26 @@
       }
     }
 
+    @media (max-width: 720px) and (orientation: portrait) {
+      @supports (padding: max(0px)) {
+        body.standalone-app {
+          padding-top: env(safe-area-inset-top);
+          padding-left: env(safe-area-inset-left);
+          padding-right: env(safe-area-inset-right);
+        }
+      }
+    }
+
+    @media (display-mode: standalone) and (max-width: 720px) and (orientation: portrait) {
+      @supports (padding: max(0px)) {
+        body {
+          padding-top: env(safe-area-inset-top);
+          padding-left: env(safe-area-inset-left);
+          padding-right: env(safe-area-inset-right);
+        }
+      }
+    }
+
     @media (max-height: 520px) and (max-width: 980px) and (orientation: landscape) {
       @supports (padding: max(0px)) {
         body {
@@ -4971,6 +4991,7 @@ function updateDocumentBackground() {
 
 function initTheme() {
   if (localStorage.getItem(THEME_KEY) !== 'dark') document.body.classList.add('light');
+  updateStandaloneDisplayMode();
   updateDocumentBackground();
   updateThemeControls();
 }
@@ -5826,14 +5847,27 @@ function updateAppViewportHeight() {
   document.documentElement.style.setProperty('--app-height', `${viewportHeight}px`);
 }
 
+function updateStandaloneDisplayMode() {
+  const isStandalone = window.matchMedia?.('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  document.body.classList.toggle('standalone-app', isStandalone);
+}
+
 function bindAppViewportHeight() {
+  updateStandaloneDisplayMode();
   updateAppViewportHeight();
   window.addEventListener('resize', updateAppViewportHeight);
   window.addEventListener('orientationchange', () => {
+    updateStandaloneDisplayMode();
     updateAppViewportHeight();
     setTimeout(updateAppViewportHeight, 250);
   });
   window.visualViewport?.addEventListener('resize', updateAppViewportHeight);
+  const standaloneMedia = window.matchMedia?.('(display-mode: standalone)');
+  if (standaloneMedia?.addEventListener) {
+    standaloneMedia.addEventListener('change', updateStandaloneDisplayMode);
+  } else if (standaloneMedia?.addListener) {
+    standaloneMedia.addListener(updateStandaloneDisplayMode);
+  }
 }
 
 function isMobileViewport() {
