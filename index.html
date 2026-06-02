@@ -2694,6 +2694,16 @@
       justify-content: center;
       cursor: pointer;
     }
+    #color-spotlight::after {
+      content: "";
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: calc(-1 * env(safe-area-inset-bottom, 0px));
+      height: env(safe-area-inset-bottom, 0px);
+      background: inherit;
+      pointer-events: none;
+    }
     #color-spotlight.open {
       display: flex;
       animation: spotlight-expand 0.22s ease-out forwards;
@@ -6765,6 +6775,7 @@ function togglePaletteGallery() {
 function openColorSpotlight(hexColor) {
   const el = document.getElementById('color-spotlight');
   const hexEl = document.getElementById('color-spotlight-hex');
+  applyColorSpotlightChrome(hexColor);
   el.style.background = hexColor;
   hexEl.textContent = hexColor.toUpperCase();
   hexEl.style.color = hexTextColor(hexColor);
@@ -6775,6 +6786,34 @@ function openColorSpotlight(hexColor) {
 
 function closeColorSpotlight() {
   document.getElementById('color-spotlight').classList.remove('open');
+  restoreColorSpotlightChrome();
+}
+
+let colorSpotlightChromeState = null;
+
+function applyColorSpotlightChrome(hexColor) {
+  const themeMeta = document.querySelector('meta[name="theme-color"]');
+  if (!colorSpotlightChromeState) {
+    colorSpotlightChromeState = {
+      htmlBackground: document.documentElement.style.background,
+      bodyBackground: document.body.style.background,
+      themeColor: themeMeta ? themeMeta.getAttribute('content') : null,
+    };
+  }
+  document.documentElement.style.background = hexColor;
+  document.body.style.background = hexColor;
+  if (themeMeta) themeMeta.setAttribute('content', hexColor);
+}
+
+function restoreColorSpotlightChrome() {
+  if (!colorSpotlightChromeState) return;
+  const themeMeta = document.querySelector('meta[name="theme-color"]');
+  document.documentElement.style.background = colorSpotlightChromeState.htmlBackground;
+  document.body.style.background = colorSpotlightChromeState.bodyBackground;
+  if (themeMeta && colorSpotlightChromeState.themeColor !== null) {
+    themeMeta.setAttribute('content', colorSpotlightChromeState.themeColor);
+  }
+  colorSpotlightChromeState = null;
 }
 
 function openTileOverlay(id) {
