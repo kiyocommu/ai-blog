@@ -7183,26 +7183,30 @@ function toggleAiAssistCollapsed() {
 }
 
 function prewarmLmStudioModel() {
-  if (lmWritingPrewarmStarted || !getLmStudioSettings().enabled) return;
+  if (lmWritingPrewarmStarted || lmWritingPingStarted || !getLmStudioSettings().enabled) return;
   if (!hasLocalAiBody(false) && !hasLocalAiBody(true)) return;
   lmWritingPrewarmStarted = true;
-  resolveLmStudioModel().catch(() => {});
+  requestLmStudioWarmupPing().catch(() => {});
 }
 
 function triggerLmStudioWritingPing() {
-  if (lmWritingPingStarted || !getLmStudioSettings().enabled) return;
+  if (lmWritingPingStarted || lmWritingPrewarmStarted || !getLmStudioSettings().enabled) return;
   if (!hasLocalAiBody(false)) return;
   lmWritingPingStarted = true;
   lmWritingPingController = new AbortController();
-  requestLmStudioContent(
+  requestLmStudioWarmupPing({ signal: lmWritingPingController.signal }).catch(() => {}).finally(() => {
+    lmWritingPingController = null;
+  });
+}
+
+function requestLmStudioWarmupPing(options = {}) {
+  return requestLmStudioContent(
     'pong とだけ返してください。',
     0,
     1,
     LM_TEXT_SYSTEM_PROMPT,
-    { forceNoThink: true, signal: lmWritingPingController.signal }
-  ).catch(() => {}).finally(() => {
-    lmWritingPingController = null;
-  });
+    { forceNoThink: true, ...options }
+  );
 }
 
 function cancelLmStudioWritingPing() {
@@ -7302,6 +7306,11 @@ async function resolveLmStudioModel() {
   if (!first) throw new Error('モデルが見つかりません');
   lmResolvedModelCache = first;
   lmResolvedModelCacheKey = cacheKey;
+  if (!settings.model) {
+    localStorage.setItem(LM_MODEL_KEY, first);
+    const modelInput = document.getElementById('lm-settings-model');
+    if (modelInput && !modelInput.value.trim()) modelInput.value = first;
+  }
   return first;
 }
 
@@ -7961,7 +7970,7 @@ async function requestLmStudioSmokeTest() {
   return model;
 }
 
-async function requestLmStudioAssist(source) {
+async function requestLmStudioAssist(source, options = {}) {
   if (!stripMarkdown(source?.comment || '').trim()) {
     throw createLmStudioError('本文がないためLM Studio連携を実行しません', { code: 'EMPTY_BODY' });
   }
@@ -7974,14 +7983,31 @@ async function requestLmStudioAssist(source) {
   const cached = lmGenerationCache.get(cacheKey);
   if (cached) return { ...cached, cached: true };
   let content = '';
+  const emitReaderProgress = partialContent => {
+    if (typeof options.onProgress !== 'function') return;
+    const readerFeedback = normalizePlainTextLmLines(partialContent, 4).filter(isUsefulLmFeedback);
+    if (!readerFeedback.length) return;
+    options.onProgress({ readerFeedback, positive: '', compact: false, streaming: true });
+  };
   try {
-    content = await requestLmStudioContent(
-      buildReaderFeedbackPrompt(payload),
-      0.2,
-      360,
-      '返答は日本語の読者メモ本文だけ。内部推論、分析、説明、見出し、JSON、箇条書き記号は禁止。2〜4行で短く返してください。',
-      { forceNoThink: true }
-    );
+    const prompt = buildReaderFeedbackPrompt(payload);
+    const systemPrompt = '返答は日本語の読者メモ本文だけ。内部推論、分析、説明、見出し、JSON、箇条書き記号は禁止。2〜4行で短く返してください。';
+    content = options.onProgress
+      ? (await requestLmStudioContentStream(
+          prompt,
+          0.2,
+          360,
+          systemPrompt,
+          { forceNoThink: true },
+          (_delta, fullContent) => emitReaderProgress(fullContent)
+        )).content
+      : await requestLmStudioContent(
+          prompt,
+          0.2,
+          360,
+          systemPrompt,
+          { forceNoThink: true }
+        );
   } catch (err) {
     if (!isRetryableReaderFeedbackError(err)) throw err;
   }
@@ -7989,7 +8015,7 @@ async function requestLmStudioAssist(source) {
     content = await requestLmStudioContent(
       buildReaderFeedbackPrompt(payload, true),
       0.15,
-      700,
+      480,
       '返答は最終出力だけ。日本語の読者メモを2〜4行。思考、理由、説明、JSON、見出しは禁止。',
       { forceNoThink: true }
     );
@@ -8390,7 +8416,7 @@ async function requestLmStudioPositiveFeedback(entry) {
   const prompt = buildPositiveFeedbackPrompt(source, settings.mbtiType);
   let firstFailure = null;
   try {
-    content = await requestLmStudioContent(prompt, 0.35, 700, LM_TEXT_SYSTEM_PROMPT, { forceNoThink: true });
+    content = await requestLmStudioContent(prompt, 0.35, 240, LM_TEXT_SYSTEM_PROMPT, { forceNoThink: true });
     const positive = normalizeLmPositiveText(content);
     if (positive) {
       setLmGenerationCache(cacheKey, positive);
@@ -8404,7 +8430,7 @@ async function requestLmStudioPositiveFeedback(entry) {
     content = await requestLmStudioContent(
       buildPositiveFeedbackPrompt(source, settings.mbtiType, true),
       0.2,
-      1200,
+      360,
       '返答は日本語の肯定コメント本文だけ。2文で、必ず句点で完結。思考、説明、JSON、見出しは禁止。',
       { forceNoThink: true }
     );
@@ -8428,7 +8454,7 @@ async function requestLmStudioPositiveFeedback(entry) {
       content = await requestLmStudioContent(
         buildEmergencyPositiveFeedbackPrompt(emergencySource),
         0.1,
-        260,
+        220,
         '返答は肯定コメント本文だけ。1文。思考、分析、説明、JSON、見出しは禁止。',
         { forceNoThink: true, timeoutMs: 30000 }
       );
@@ -8732,7 +8758,13 @@ async function renderAiAssistWithLmStudio(isTof = false) {
   });
   setAiAssistGenerating(isTof, true);
   try {
-    const assist = await requestLmStudioAssist(source);
+    const assist = await requestLmStudioAssist(source, {
+      onProgress: partialAssist => {
+        if (requestId !== aiAssistRequestSeq) return;
+        renderAiAssistContent(partialAssist, isTof);
+        setAiAssistNote(isTof, 'LM Studio受信中...');
+      },
+    });
     if (requestId !== aiAssistRequestSeq) return;
     renderAiAssistContent(assist, isTof);
     setLmDiagnosticText(isTof, formatLmSuccessSummary(assist), {
