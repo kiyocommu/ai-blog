@@ -2,14 +2,17 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>AI Blog</title>
   <link rel="icon" type="image/svg+xml" href="icons/app-icon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
   <link rel="manifest" href="manifest.webmanifest">
-  <meta name="theme-color" content="#e94560">
+  <meta name="theme-color" content="#64779f">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="AI Blog">
   <script src="https://cdn.jsdelivr.net/npm/marked@9/marked.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
@@ -18,11 +21,17 @@
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
+    html {
+      height: 100%;
+      background: #1a1a2e;
+    }
+
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       background: #1a1a2e;
       color: #e0e0e0;
-      height: 100vh;
+      height: var(--app-height, 100vh);
+      min-height: 100%;
       display: flex;
       flex-direction: column;
       overflow: hidden;
@@ -2685,6 +2694,16 @@
       justify-content: center;
       cursor: pointer;
     }
+    #color-spotlight::after {
+      content: "";
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: calc(-1 * env(safe-area-inset-bottom, 0px));
+      height: env(safe-area-inset-bottom, 0px);
+      background: inherit;
+      pointer-events: none;
+    }
     #color-spotlight.open {
       display: flex;
       animation: spotlight-expand 0.22s ease-out forwards;
@@ -2717,6 +2736,10 @@
       --blog-accent-soft: #f0dfe0;
       --blog-blue: #5f7f91;
       --blog-green: #7f9274;
+    }
+
+    html {
+      background: var(--blog-bg);
     }
 
     body,
@@ -3688,7 +3711,7 @@
     }
 
     @media (max-width: 720px), (max-height: 520px) and (max-width: 980px) and (orientation: landscape) {
-      body { height: 100dvh; }
+      body { height: var(--app-height, 100dvh); }
       #header,
       body.light #header {
         gap: 6px;
@@ -3966,7 +3989,34 @@
       }
     }
 
+    @media (max-width: 720px) and (orientation: portrait) {
+      @supports (padding: max(0px)) {
+        body.standalone-app {
+          padding-top: env(safe-area-inset-top);
+          padding-left: env(safe-area-inset-left);
+          padding-right: env(safe-area-inset-right);
+        }
+      }
+    }
+
+    @media (display-mode: standalone) and (max-width: 720px) and (orientation: portrait) {
+      @supports (padding: max(0px)) {
+        body {
+          padding-top: env(safe-area-inset-top);
+          padding-left: env(safe-area-inset-left);
+          padding-right: env(safe-area-inset-right);
+        }
+      }
+    }
+
     @media (max-height: 520px) and (max-width: 980px) and (orientation: landscape) {
+      @supports (padding: max(0px)) {
+        body {
+          padding-top: 0;
+          padding-left: env(safe-area-inset-left);
+          padding-right: env(safe-area-inset-right);
+        }
+      }
       #header,
       body.light #header {
         padding: 3px 6px;
@@ -4945,14 +4995,21 @@ function updateThemeControls() {
   }
 }
 
+function updateDocumentBackground() {
+  document.documentElement.style.background = getCurrentTheme() === 'light' ? '#f7f5f0' : '#171614';
+}
+
 function initTheme() {
   if (localStorage.getItem(THEME_KEY) !== 'dark') document.body.classList.add('light');
+  updateStandaloneDisplayMode();
+  updateDocumentBackground();
   updateThemeControls();
 }
 
 function toggleTheme() {
   document.body.classList.toggle('light');
   localStorage.setItem(THEME_KEY, getCurrentTheme());
+  updateDocumentBackground();
   updateThemeControls();
   markSettingsUpdatedAndQueue('theme');
 }
@@ -5303,6 +5360,7 @@ function applyCloudSettings(row) {
   const theme = row.theme === 'dark' ? 'dark' : 'light';
   document.body.classList.toggle('light', theme !== 'dark');
   localStorage.setItem(THEME_KEY, theme);
+  updateDocumentBackground();
   const nextView = row.view_mode === 'palette-gallery' ? 'palette-gallery' : 'list';
   localStorage.setItem(VIEW_KEY, nextView);
   viewMode = nextView;
@@ -5794,6 +5852,34 @@ const MOBILE_DETAIL_SWIPE_EDGE_WIDTH = 64;
 const MOBILE_DETAIL_SWIPE_BACK_DISTANCE = 52;
 const MOBILE_DETAIL_SWIPE_LOCK_DISTANCE = 10;
 
+function updateAppViewportHeight() {
+  const viewportHeight = window.visualViewport?.height || window.innerHeight;
+  document.documentElement.style.setProperty('--app-height', `${viewportHeight}px`);
+}
+
+function updateStandaloneDisplayMode() {
+  const isStandalone = window.matchMedia?.('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  document.body.classList.toggle('standalone-app', isStandalone);
+}
+
+function bindAppViewportHeight() {
+  updateStandaloneDisplayMode();
+  updateAppViewportHeight();
+  window.addEventListener('resize', updateAppViewportHeight);
+  window.addEventListener('orientationchange', () => {
+    updateStandaloneDisplayMode();
+    updateAppViewportHeight();
+    setTimeout(updateAppViewportHeight, 250);
+  });
+  window.visualViewport?.addEventListener('resize', updateAppViewportHeight);
+  const standaloneMedia = window.matchMedia?.('(display-mode: standalone)');
+  if (standaloneMedia?.addEventListener) {
+    standaloneMedia.addEventListener('change', updateStandaloneDisplayMode);
+  } else if (standaloneMedia?.addListener) {
+    standaloneMedia.addListener(updateStandaloneDisplayMode);
+  }
+}
+
 function isMobileViewport() {
   return window.matchMedia(MOBILE_VIEWPORT_QUERY).matches;
 }
@@ -5895,6 +5981,7 @@ function bindMobileDetailSwipeBack() {
 
 // ---- Events ----
 function bindEvents() {
+  bindAppViewportHeight();
   bindMobileDetailSwipeBack();
 
   // Tag filter
@@ -6688,6 +6775,7 @@ function togglePaletteGallery() {
 function openColorSpotlight(hexColor) {
   const el = document.getElementById('color-spotlight');
   const hexEl = document.getElementById('color-spotlight-hex');
+  applyColorSpotlightChrome(hexColor);
   el.style.background = hexColor;
   hexEl.textContent = hexColor.toUpperCase();
   hexEl.style.color = hexTextColor(hexColor);
@@ -6698,6 +6786,34 @@ function openColorSpotlight(hexColor) {
 
 function closeColorSpotlight() {
   document.getElementById('color-spotlight').classList.remove('open');
+  restoreColorSpotlightChrome();
+}
+
+let colorSpotlightChromeState = null;
+
+function applyColorSpotlightChrome(hexColor) {
+  const themeMeta = document.querySelector('meta[name="theme-color"]');
+  if (!colorSpotlightChromeState) {
+    colorSpotlightChromeState = {
+      htmlBackground: document.documentElement.style.background,
+      bodyBackground: document.body.style.background,
+      themeColor: themeMeta ? themeMeta.getAttribute('content') : null,
+    };
+  }
+  document.documentElement.style.background = hexColor;
+  document.body.style.background = hexColor;
+  if (themeMeta) themeMeta.setAttribute('content', hexColor);
+}
+
+function restoreColorSpotlightChrome() {
+  if (!colorSpotlightChromeState) return;
+  const themeMeta = document.querySelector('meta[name="theme-color"]');
+  document.documentElement.style.background = colorSpotlightChromeState.htmlBackground;
+  document.body.style.background = colorSpotlightChromeState.bodyBackground;
+  if (themeMeta && colorSpotlightChromeState.themeColor !== null) {
+    themeMeta.setAttribute('content', colorSpotlightChromeState.themeColor);
+  }
+  colorSpotlightChromeState = null;
 }
 
 function openTileOverlay(id) {
@@ -8272,6 +8388,7 @@ async function requestLmStudioPositiveFeedback(entry) {
     return fallbackPositive;
   }
   const prompt = buildPositiveFeedbackPrompt(source, settings.mbtiType);
+  let firstFailure = null;
   try {
     content = await requestLmStudioContent(prompt, 0.35, 700, LM_TEXT_SYSTEM_PROMPT, { forceNoThink: true });
     const positive = normalizeLmPositiveText(content);
@@ -8281,23 +8398,57 @@ async function requestLmStudioPositiveFeedback(entry) {
     }
   } catch (err) {
     if (!isRetryablePositiveFeedbackError(err)) throw err;
+    firstFailure = err;
   }
-  content = await requestLmStudioContent(
-    buildPositiveFeedbackPrompt(source, settings.mbtiType, true),
-    0.2,
-    1200,
-    '返答は日本語の肯定コメント本文だけ。2文で、必ず句点で完結。思考、説明、JSON、見出しは禁止。',
-    { forceNoThink: true }
-  );
-  const positive = normalizeLmPositiveText(content);
-  if (!positive) {
+  try {
+    content = await requestLmStudioContent(
+      buildPositiveFeedbackPrompt(source, settings.mbtiType, true),
+      0.2,
+      1200,
+      '返答は日本語の肯定コメント本文だけ。2文で、必ず句点で完結。思考、説明、JSON、見出しは禁止。',
+      { forceNoThink: true }
+    );
+    const positive = normalizeLmPositiveText(content);
+    if (positive) {
+      setLmGenerationCache(cacheKey, positive);
+      return positive;
+    }
     throw createLmStudioError('positiveが空、未完結、または保存通知だけの文です', {
       code: 'EMPTY_POSITIVE',
+      firstDetail: firstFailure?.lmStudio || null,
       responseExcerpt: String(content || '').slice(0, 220),
     });
+  } catch (retryErr) {
+    if (!isPositiveFeedbackFallbackError(retryErr)) throw retryErr;
+    try {
+      const emergencySource = {
+        ...source,
+        comment: compactTextForLmStudio(source.comment || '', 140),
+      };
+      content = await requestLmStudioContent(
+        buildEmergencyPositiveFeedbackPrompt(emergencySource),
+        0.1,
+        260,
+        '返答は肯定コメント本文だけ。1文。思考、分析、説明、JSON、見出しは禁止。',
+        { forceNoThink: true, timeoutMs: 30000 }
+      );
+      const positive = normalizeLmPositiveText(content);
+      if (positive) {
+        setLmGenerationCache(cacheKey, positive);
+        return positive;
+      }
+      throw createLmStudioError('positiveが空、未完結、または保存通知だけの文です', {
+        code: 'EMPTY_POSITIVE',
+        firstDetail: retryErr?.lmStudio || firstFailure?.lmStudio || null,
+        responseExcerpt: String(content || '').slice(0, 220),
+      });
+    } catch (finalErr) {
+      if (!isPositiveFeedbackFallbackError(finalErr)) throw finalErr;
+      const fallbackPositive = buildLocalPositiveFeedback(source, settings.mbtiType);
+      setLmGenerationCache(cacheKey, fallbackPositive);
+      return fallbackPositive;
+    }
   }
-  setLmGenerationCache(cacheKey, positive);
-  return positive;
 }
 
 function buildPositiveFeedbackPrompt(source, mbtiType = 'INFJ', minimal = false) {
@@ -8321,6 +8472,14 @@ function buildFastPositiveFeedbackPrompt(source) {
     '保存後に表示する短い肯定コメントを日本語で1〜2文、80字以内で返す。',
     '本文の具体語を1つ入れる。助言、説明、「保存しました」、見出し、箇条書きは禁止。最初の文字からコメント本文を書く。',
     `本文: ${source.comment || '(本文なし)'}`,
+  ].join('\n');
+}
+
+function buildEmergencyPositiveFeedbackPrompt(source) {
+  return [
+    '肯定コメントを日本語で1文だけ返す。40〜70字。必ず句点で終える。',
+    '思考、分析、説明、JSON、見出し、箇条書き、「保存しました」は禁止。',
+    `本文: ${source.comment || source.title || '(本文なし)'}`,
   ].join('\n');
 }
 
@@ -8350,6 +8509,10 @@ function isRetryablePositiveFeedbackError(err) {
   if (['EMPTY_RESPONSE', 'TIMEOUT'].includes(code)) return true;
   if (err?.lmStudio?.finishReason === 'length') return true;
   return /chat応答が空|finish_reason=length|タイムアウト/i.test(String(err?.message || err));
+}
+
+function isPositiveFeedbackFallbackError(err) {
+  return isRetryablePositiveFeedbackError(err) || err?.lmStudio?.code === 'EMPTY_POSITIVE';
 }
 
 function normalizeLmPositiveText(value) {
