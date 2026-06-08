@@ -1,13 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="AI Blog">
   <rect width="512" height="512" rx="96" fill="#64779f"/>
-  <path fill="#ffffff" d="M134 82c0-12 10-22 22-22h8c12 0 22 10 22 22v348c0 12-10 22-22 22h-8c-12 0-22-10-22-22V82z"/>
-  <path fill="#ffffff" d="M170 86c65-25 151-21 199 18 55 45 55 126 0 169-48 38-134 39-199 13V86z"/>
-  <path fill="#ffffff" d="M170 244c70-27 158-20 204 22 57 52 49 136-14 176-51 32-131 28-190 4V244z"/>
-  <path fill="#64779f" d="M218 139c43-16 99-13 130 12 31 26 31 69-2 92-31 23-86 22-128 5V139z"/>
-  <path fill="#64779f" d="M218 300c45-17 102-12 134 16 33 29 29 74-7 98-32 21-86 19-127 2V300z"/>
-  <path d="M238 155c31-8 66-3 88 15" fill="none" stroke="#ffffff" stroke-width="9" stroke-linecap="round"/>
-  <path d="M238 192c36-8 74-2 98 17" fill="none" stroke="#ffffff" stroke-width="9" stroke-linecap="round"/>
-  <path d="M238 317c34-9 72-3 96 18" fill="none" stroke="#ffffff" stroke-width="9" stroke-linecap="round"/>
-  <path d="M238 356c36-8 72-1 94 18" fill="none" stroke="#ffffff" stroke-width="9" stroke-linecap="round"/>
-  <path d="M160 96v320" fill="none" stroke="#64779f" stroke-width="10" stroke-linecap="round"/>
+  <g transform="translate(35.84 35.84) scale(0.86)">
+    <path fill="#ffffff" d="M134 82c0-12 10-22 22-22h8c12 0 22 10 22 22v348c0 12-10 22-22 22h-8c-12 0-22-10-22-22V82z"/>
+    <path fill="#ffffff" d="M170 86c65-25 151-21 199 18 55 45 55 126 0 169-48 38-134 39-199 13V86z"/>
+    <path fill="#ffffff" d="M170 244c70-27 158-20 204 22 57 52 49 136-14 176-51 32-131 28-190 4V244z"/>
+    <path fill="#64779f" d="M218 139c43-16 99-13 130 12 31 26 31 69-2 92-31 23-86 22-128 5V139z"/>
+    <path fill="#64779f" d="M218 300c45-17 102-12 134 16 33 29 29 74-7 98-32 21-86 19-127 2V300z"/>
+    <path d="M160 96v320" fill="none" stroke="#64779f" stroke-width="10" stroke-linecap="round"/>
+  </g>
 </svg>
