@@ -3789,10 +3789,6 @@
         border-right: none;
         transition: transform 0.22s ease;
       }
-      #article-list-panel {
-        overflow-x: hidden;
-        overflow-y: auto;
-      }
       #main.panel-detail:not(.tile-mode):not(.palette-gallery-mode) #article-list-panel,
       #main.panel-edit:not(.tile-mode):not(.palette-gallery-mode) #article-list-panel,
       #main.panel-detail:not(.tile-mode):not(.palette-gallery-mode) #detail-panel,
@@ -3871,15 +3867,7 @@
       }
       #main:not(.tile-mode):not(.palette-gallery-mode) #article-list {
         display: block;
-        flex: 0 0 auto;
-        min-height: auto;
-        overflow: visible;
         padding: 0 0 18px;
-      }
-      #main.palette-gallery-mode #article-list {
-        flex: 0 0 auto;
-        min-height: auto;
-        overflow: visible;
       }
       #main:not(.tile-mode):not(.palette-gallery-mode) .article-item {
         border: 0;
@@ -5898,10 +5886,6 @@ function isMobileViewport() {
   return window.matchMedia(MOBILE_VIEWPORT_QUERY).matches;
 }
 
-function getArticleListScrollContainer() {
-  return document.getElementById(isMobileViewport() ? 'article-list-panel' : 'article-list');
-}
-
 function bindMobileDetailSwipeBack() {
   const detailPanel = document.getElementById('detail-panel');
   if (!detailPanel) return;
@@ -6778,7 +6762,7 @@ function showOverview() {
   setViewMode('list');
   renderArticleList();
   setPanel('empty');
-  getArticleListScrollContainer()?.scrollTo({ top: 0, behavior: 'smooth' });
+  document.getElementById('article-list')?.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function toggleViewMode() {
@@ -9282,7 +9266,9 @@ function navigateArticle(dir) {
   renderDetail(selectedId);
   const activeEl = document.querySelector(`.article-item[data-id="${selectedId}"]`);
   if (activeEl) {
-    activeEl.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    const container = document.getElementById('article-list');
+    const targetTop = activeEl.offsetTop - container.clientHeight / 2 + activeEl.offsetHeight / 2 + 100;
+    container.scrollTo({ top: targetTop, behavior: 'smooth' });
   }
 }
 
