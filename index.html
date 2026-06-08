@@ -3789,6 +3789,10 @@
         border-right: none;
         transition: transform 0.22s ease;
       }
+      #article-list-panel {
+        overflow-x: hidden;
+        overflow-y: auto;
+      }
       #main.panel-detail:not(.tile-mode):not(.palette-gallery-mode) #article-list-panel,
       #main.panel-edit:not(.tile-mode):not(.palette-gallery-mode) #article-list-panel,
       #main.panel-detail:not(.tile-mode):not(.palette-gallery-mode) #detail-panel,
@@ -3867,7 +3871,15 @@
       }
       #main:not(.tile-mode):not(.palette-gallery-mode) #article-list {
         display: block;
+        flex: 0 0 auto;
+        min-height: auto;
+        overflow: visible;
         padding: 0 0 18px;
+      }
+      #main.palette-gallery-mode #article-list {
+        flex: 0 0 auto;
+        min-height: auto;
+        overflow: visible;
       }
       #main:not(.tile-mode):not(.palette-gallery-mode) .article-item {
         border: 0;
@@ -3908,6 +3920,13 @@
       .blog-card-title {
         font-size: 15px;
         line-height: 1.45;
+      }
+      #main:not(.tile-mode):not(.palette-gallery-mode) .article-item.no-image .blog-card-title {
+        font-size: 15px;
+        line-height: 1.45;
+        height: auto;
+        min-height: 0;
+        max-height: calc(15px * 1.45 * 3);
       }
       .blog-card-excerpt {
         font-size: 12px;
@@ -4052,6 +4071,11 @@
       .blog-card-title {
         font-size: 14px;
         line-height: 1.35;
+      }
+      #main:not(.tile-mode):not(.palette-gallery-mode) .article-item.no-image .blog-card-title {
+        font-size: 14px;
+        line-height: 1.35;
+        max-height: calc(14px * 1.35 * 3);
       }
       .blog-card-excerpt {
         -webkit-line-clamp: 1;
@@ -5886,6 +5910,10 @@ function isMobileViewport() {
   return window.matchMedia(MOBILE_VIEWPORT_QUERY).matches;
 }
 
+function getArticleListScrollContainer() {
+  return document.getElementById(isMobileViewport() ? 'article-list-panel' : 'article-list');
+}
+
 function bindMobileDetailSwipeBack() {
   const detailPanel = document.getElementById('detail-panel');
   if (!detailPanel) return;
@@ -6762,7 +6790,7 @@ function showOverview() {
   setViewMode('list');
   renderArticleList();
   setPanel('empty');
-  document.getElementById('article-list')?.scrollTo({ top: 0, behavior: 'smooth' });
+  getArticleListScrollContainer()?.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function toggleViewMode() {
@@ -9266,9 +9294,7 @@ function navigateArticle(dir) {
   renderDetail(selectedId);
   const activeEl = document.querySelector(`.article-item[data-id="${selectedId}"]`);
   if (activeEl) {
-    const container = document.getElementById('article-list');
-    const targetTop = activeEl.offsetTop - container.clientHeight / 2 + activeEl.offsetHeight / 2 + 100;
-    container.scrollTo({ top: targetTop, behavior: 'smooth' });
+    activeEl.scrollIntoView({ block: 'center', behavior: 'smooth' });
   }
 }
 
