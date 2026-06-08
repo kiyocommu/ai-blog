@@ -2732,6 +2732,7 @@
       --blog-text: #2a2723;
       --blog-muted: #867e73;
       --blog-border: #ddd6ca;
+      --blog-mobile-divider: #ddd6ca66;
       --blog-accent: #b75d62;
       --blog-accent-soft: #f0dfe0;
       --blog-blue: #5f7f91;
@@ -2756,6 +2757,7 @@
       --blog-text: #eee8dd;
       --blog-muted: #a79d90;
       --blog-border: #3a352f;
+      --blog-mobile-divider: #3a352f66;
       --blog-accent: #d4858b;
       --blog-accent-soft: #3b2729;
       --blog-blue: #91adbb;
@@ -3787,6 +3789,10 @@
         border-right: none;
         transition: transform 0.22s ease;
       }
+      #article-list-panel {
+        overflow-x: hidden;
+        overflow-y: auto;
+      }
       #main.panel-detail:not(.tile-mode):not(.palette-gallery-mode) #article-list-panel,
       #main.panel-edit:not(.tile-mode):not(.palette-gallery-mode) #article-list-panel,
       #main.panel-detail:not(.tile-mode):not(.palette-gallery-mode) #detail-panel,
@@ -3865,11 +3871,19 @@
       }
       #main:not(.tile-mode):not(.palette-gallery-mode) #article-list {
         display: block;
+        flex: 0 0 auto;
+        min-height: auto;
+        overflow: visible;
         padding: 0 0 18px;
+      }
+      #main.palette-gallery-mode #article-list {
+        flex: 0 0 auto;
+        min-height: auto;
+        overflow: visible;
       }
       #main:not(.tile-mode):not(.palette-gallery-mode) .article-item {
         border: 0;
-        border-bottom: 1px solid var(--blog-border);
+        border-bottom: 0.5px solid var(--blog-mobile-divider);
         border-radius: 0;
         box-shadow: none;
         max-width: none;
@@ -5884,6 +5898,10 @@ function isMobileViewport() {
   return window.matchMedia(MOBILE_VIEWPORT_QUERY).matches;
 }
 
+function getArticleListScrollContainer() {
+  return document.getElementById(isMobileViewport() ? 'article-list-panel' : 'article-list');
+}
+
 function bindMobileDetailSwipeBack() {
   const detailPanel = document.getElementById('detail-panel');
   if (!detailPanel) return;
@@ -6760,7 +6778,7 @@ function showOverview() {
   setViewMode('list');
   renderArticleList();
   setPanel('empty');
-  document.getElementById('article-list')?.scrollTo({ top: 0, behavior: 'smooth' });
+  getArticleListScrollContainer()?.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function toggleViewMode() {
@@ -7183,26 +7201,30 @@ function toggleAiAssistCollapsed() {
 }
 
 function prewarmLmStudioModel() {
-  if (lmWritingPrewarmStarted || !getLmStudioSettings().enabled) return;
+  if (lmWritingPrewarmStarted || lmWritingPingStarted || !getLmStudioSettings().enabled) return;
   if (!hasLocalAiBody(false) && !hasLocalAiBody(true)) return;
   lmWritingPrewarmStarted = true;
-  resolveLmStudioModel().catch(() => {});
+  requestLmStudioWarmupPing().catch(() => {});
 }
 
 function triggerLmStudioWritingPing() {
-  if (lmWritingPingStarted || !getLmStudioSettings().enabled) return;
+  if (lmWritingPingStarted || lmWritingPrewarmStarted || !getLmStudioSettings().enabled) return;
   if (!hasLocalAiBody(false)) return;
   lmWritingPingStarted = true;
   lmWritingPingController = new AbortController();
-  requestLmStudioContent(
+  requestLmStudioWarmupPing({ signal: lmWritingPingController.signal }).catch(() => {}).finally(() => {
+    lmWritingPingController = null;
+  });
+}
+
+function requestLmStudioWarmupPing(options = {}) {
+  return requestLmStudioContent(
     'pong とだけ返してください。',
     0,
     1,
     LM_TEXT_SYSTEM_PROMPT,
-    { forceNoThink: true, signal: lmWritingPingController.signal }
-  ).catch(() => {}).finally(() => {
-    lmWritingPingController = null;
-  });
+    { forceNoThink: true, ...options }
+  );
 }
 
 function cancelLmStudioWritingPing() {
@@ -7302,6 +7324,11 @@ async function resolveLmStudioModel() {
   if (!first) throw new Error('モデルが見つかりません');
   lmResolvedModelCache = first;
   lmResolvedModelCacheKey = cacheKey;
+  if (!settings.model) {
+    localStorage.setItem(LM_MODEL_KEY, first);
+    const modelInput = document.getElementById('lm-settings-model');
+    if (modelInput && !modelInput.value.trim()) modelInput.value = first;
+  }
   return first;
 }
 
@@ -7961,7 +7988,7 @@ async function requestLmStudioSmokeTest() {
   return model;
 }
 
-async function requestLmStudioAssist(source) {
+async function requestLmStudioAssist(source, options = {}) {
   if (!stripMarkdown(source?.comment || '').trim()) {
     throw createLmStudioError('本文がないためLM Studio連携を実行しません', { code: 'EMPTY_BODY' });
   }
@@ -7974,14 +8001,31 @@ async function requestLmStudioAssist(source) {
   const cached = lmGenerationCache.get(cacheKey);
   if (cached) return { ...cached, cached: true };
   let content = '';
+  const emitReaderProgress = partialContent => {
+    if (typeof options.onProgress !== 'function') return;
+    const readerFeedback = normalizePlainTextLmLines(partialContent, 4).filter(isUsefulLmFeedback);
+    if (!readerFeedback.length) return;
+    options.onProgress({ readerFeedback, positive: '', compact: false, streaming: true });
+  };
   try {
-    content = await requestLmStudioContent(
-      buildReaderFeedbackPrompt(payload),
-      0.2,
-      360,
-      '返答は日本語の読者メモ本文だけ。内部推論、分析、説明、見出し、JSON、箇条書き記号は禁止。2〜4行で短く返してください。',
-      { forceNoThink: true }
-    );
+    const prompt = buildReaderFeedbackPrompt(payload);
+    const systemPrompt = '返答は日本語の読者メモ本文だけ。内部推論、分析、説明、見出し、JSON、箇条書き記号は禁止。2〜4行で短く返してください。';
+    content = options.onProgress
+      ? (await requestLmStudioContentStream(
+          prompt,
+          0.2,
+          360,
+          systemPrompt,
+          { forceNoThink: true },
+          (_delta, fullContent) => emitReaderProgress(fullContent)
+        )).content
+      : await requestLmStudioContent(
+          prompt,
+          0.2,
+          360,
+          systemPrompt,
+          { forceNoThink: true }
+        );
   } catch (err) {
     if (!isRetryableReaderFeedbackError(err)) throw err;
   }
@@ -7989,7 +8033,7 @@ async function requestLmStudioAssist(source) {
     content = await requestLmStudioContent(
       buildReaderFeedbackPrompt(payload, true),
       0.15,
-      700,
+      480,
       '返答は最終出力だけ。日本語の読者メモを2〜4行。思考、理由、説明、JSON、見出しは禁止。',
       { forceNoThink: true }
     );
@@ -8388,8 +8432,9 @@ async function requestLmStudioPositiveFeedback(entry) {
     return fallbackPositive;
   }
   const prompt = buildPositiveFeedbackPrompt(source, settings.mbtiType);
+  let firstFailure = null;
   try {
-    content = await requestLmStudioContent(prompt, 0.35, 700, LM_TEXT_SYSTEM_PROMPT, { forceNoThink: true });
+    content = await requestLmStudioContent(prompt, 0.35, 240, LM_TEXT_SYSTEM_PROMPT, { forceNoThink: true });
     const positive = normalizeLmPositiveText(content);
     if (positive) {
       setLmGenerationCache(cacheKey, positive);
@@ -8397,23 +8442,57 @@ async function requestLmStudioPositiveFeedback(entry) {
     }
   } catch (err) {
     if (!isRetryablePositiveFeedbackError(err)) throw err;
+    firstFailure = err;
   }
-  content = await requestLmStudioContent(
-    buildPositiveFeedbackPrompt(source, settings.mbtiType, true),
-    0.2,
-    1200,
-    '返答は日本語の肯定コメント本文だけ。2文で、必ず句点で完結。思考、説明、JSON、見出しは禁止。',
-    { forceNoThink: true }
-  );
-  const positive = normalizeLmPositiveText(content);
-  if (!positive) {
+  try {
+    content = await requestLmStudioContent(
+      buildPositiveFeedbackPrompt(source, settings.mbtiType, true),
+      0.2,
+      360,
+      '返答は日本語の肯定コメント本文だけ。2文で、必ず句点で完結。思考、説明、JSON、見出しは禁止。',
+      { forceNoThink: true }
+    );
+    const positive = normalizeLmPositiveText(content);
+    if (positive) {
+      setLmGenerationCache(cacheKey, positive);
+      return positive;
+    }
     throw createLmStudioError('positiveが空、未完結、または保存通知だけの文です', {
       code: 'EMPTY_POSITIVE',
+      firstDetail: firstFailure?.lmStudio || null,
       responseExcerpt: String(content || '').slice(0, 220),
     });
+  } catch (retryErr) {
+    if (!isPositiveFeedbackFallbackError(retryErr)) throw retryErr;
+    try {
+      const emergencySource = {
+        ...source,
+        comment: compactTextForLmStudio(source.comment || '', 140),
+      };
+      content = await requestLmStudioContent(
+        buildEmergencyPositiveFeedbackPrompt(emergencySource),
+        0.1,
+        220,
+        '返答は肯定コメント本文だけ。1文。思考、分析、説明、JSON、見出しは禁止。',
+        { forceNoThink: true, timeoutMs: 30000 }
+      );
+      const positive = normalizeLmPositiveText(content);
+      if (positive) {
+        setLmGenerationCache(cacheKey, positive);
+        return positive;
+      }
+      throw createLmStudioError('positiveが空、未完結、または保存通知だけの文です', {
+        code: 'EMPTY_POSITIVE',
+        firstDetail: retryErr?.lmStudio || firstFailure?.lmStudio || null,
+        responseExcerpt: String(content || '').slice(0, 220),
+      });
+    } catch (finalErr) {
+      if (!isPositiveFeedbackFallbackError(finalErr)) throw finalErr;
+      const fallbackPositive = buildLocalPositiveFeedback(source, settings.mbtiType);
+      setLmGenerationCache(cacheKey, fallbackPositive);
+      return fallbackPositive;
+    }
   }
-  setLmGenerationCache(cacheKey, positive);
-  return positive;
 }
 
 function buildPositiveFeedbackPrompt(source, mbtiType = 'INFJ', minimal = false) {
@@ -8437,6 +8516,14 @@ function buildFastPositiveFeedbackPrompt(source) {
     '保存後に表示する短い肯定コメントを日本語で1〜2文、80字以内で返す。',
     '本文の具体語を1つ入れる。助言、説明、「保存しました」、見出し、箇条書きは禁止。最初の文字からコメント本文を書く。',
     `本文: ${source.comment || '(本文なし)'}`,
+  ].join('\n');
+}
+
+function buildEmergencyPositiveFeedbackPrompt(source) {
+  return [
+    '肯定コメントを日本語で1文だけ返す。40〜70字。必ず句点で終える。',
+    '思考、分析、説明、JSON、見出し、箇条書き、「保存しました」は禁止。',
+    `本文: ${source.comment || source.title || '(本文なし)'}`,
   ].join('\n');
 }
 
@@ -8466,6 +8553,10 @@ function isRetryablePositiveFeedbackError(err) {
   if (['EMPTY_RESPONSE', 'TIMEOUT'].includes(code)) return true;
   if (err?.lmStudio?.finishReason === 'length') return true;
   return /chat応答が空|finish_reason=length|タイムアウト/i.test(String(err?.message || err));
+}
+
+function isPositiveFeedbackFallbackError(err) {
+  return isRetryablePositiveFeedbackError(err) || err?.lmStudio?.code === 'EMPTY_POSITIVE';
 }
 
 function normalizeLmPositiveText(value) {
@@ -8685,7 +8776,13 @@ async function renderAiAssistWithLmStudio(isTof = false) {
   });
   setAiAssistGenerating(isTof, true);
   try {
-    const assist = await requestLmStudioAssist(source);
+    const assist = await requestLmStudioAssist(source, {
+      onProgress: partialAssist => {
+        if (requestId !== aiAssistRequestSeq) return;
+        renderAiAssistContent(partialAssist, isTof);
+        setAiAssistNote(isTof, 'LM Studio受信中...');
+      },
+    });
     if (requestId !== aiAssistRequestSeq) return;
     renderAiAssistContent(assist, isTof);
     setLmDiagnosticText(isTof, formatLmSuccessSummary(assist), {
@@ -9185,9 +9282,7 @@ function navigateArticle(dir) {
   renderDetail(selectedId);
   const activeEl = document.querySelector(`.article-item[data-id="${selectedId}"]`);
   if (activeEl) {
-    const container = document.getElementById('article-list');
-    const targetTop = activeEl.offsetTop - container.clientHeight / 2 + activeEl.offsetHeight / 2 + 100;
-    container.scrollTo({ top: targetTop, behavior: 'smooth' });
+    activeEl.scrollIntoView({ block: 'center', behavior: 'smooth' });
   }
 }
 
