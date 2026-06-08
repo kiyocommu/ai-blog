@@ -3235,6 +3235,9 @@
       border-color: var(--blog-accent);
       color: var(--blog-text);
     }
+    #mobile-detail-back-btn {
+      display: none;
+    }
     #detail-title,
     body.light #detail-title {
       max-width: 760px;
@@ -3940,14 +3943,67 @@
       }
       #main.panel-detail:not(.tile-mode):not(.palette-gallery-mode) #detail-header > *,
       #main.panel-detail:not(.tile-mode):not(.palette-gallery-mode) #detail-content {
-        width: calc(100vw - 12px);
+        width: 100%;
       }
       #main.panel-detail:not(.tile-mode):not(.palette-gallery-mode) #detail-back-btn {
         display: none;
       }
+      #detail-title-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        width: 100%;
+      }
+      #mobile-detail-back-btn,
+      body.light #mobile-detail-back-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 28px;
+        width: 28px;
+        height: 28px;
+        margin-top: 1px;
+        border: 1px solid var(--blog-border);
+        border-radius: 999px;
+        background: transparent;
+        color: var(--blog-muted);
+        font-size: 17px;
+        line-height: 1;
+        position: relative;
+        z-index: 25;
+        cursor: pointer;
+      }
+      #mobile-detail-back-btn:hover,
+      #mobile-detail-back-btn:focus-visible,
+      body.light #mobile-detail-back-btn:hover,
+      body.light #mobile-detail-back-btn:focus-visible {
+        background: var(--blog-panel-soft);
+        border-color: var(--blog-accent);
+        color: var(--blog-text);
+      }
       #detail-title {
+        flex: 1;
+        min-width: 0;
         font-size: 20px;
         line-height: 1.45;
+      }
+      #detail-meta {
+        width: 100%;
+        max-width: none;
+        padding-right: 6px;
+        box-sizing: border-box;
+      }
+      #detail-actions {
+        margin-left: auto;
+        min-width: 60px;
+        gap: 8px;
+        justify-content: flex-end;
+      }
+      #detail-actions #edit-btn,
+      #detail-actions #pin-btn {
+        width: 26px;
+        height: 26px;
+        flex: 0 0 26px;
       }
       #detail-content {
         padding: 10px 6px 90px;
@@ -4180,7 +4236,10 @@
     <div id="detail-view">
       <div id="detail-header">
         <button id="detail-back-btn" type="button">← Articles</button>
-        <div id="detail-title"></div>
+        <div id="detail-title-row">
+          <button id="mobile-detail-back-btn" type="button" data-tooltip="一覧へ戻る" aria-label="一覧へ戻る">←</button>
+          <div id="detail-title"></div>
+        </div>
         <div id="detail-meta">
           <a id="detail-link" href="#" target="_blank" rel="noopener noreferrer"></a>
           <span id="detail-date"></span>
@@ -6119,6 +6178,7 @@ function bindEvents() {
   });
 
   document.getElementById('detail-back-btn').addEventListener('click', showOverview);
+  document.getElementById('mobile-detail-back-btn').addEventListener('click', showOverview);
 
   // Import
   document.getElementById('import-btn').addEventListener('click', () => {
