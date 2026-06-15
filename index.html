@@ -148,17 +148,16 @@
       margin-left: 4px;
     }
     #cloud-status {
-      border: 1px solid #243f68;
-      border-radius: 999px;
-      color: #6f8db0;
-      font-size: 11px;
-      line-height: 1;
-      padding: 4px 8px;
+      color: #6a7090;
+      font-size: 10px;
+      line-height: 1.2;
+      max-width: 86px;
+      overflow: hidden;
+      text-overflow: ellipsis;
       white-space: nowrap;
     }
     #cloud-status.online {
-      border-color: rgba(139, 233, 193, 0.35);
-      color: #8be9c1;
+      color: #6f8db0;
     }
 
     /* ---- Main layout ---- */
@@ -1853,8 +1852,8 @@
     body.light .btn-header { background: #D4DBEC; border-color: #B8C2D8; color: #1a1a2e; }
     body.light .btn-header:hover { background: #C5CCE0; }
     body.light #entry-count { color: #8890aa; }
-    body.light #cloud-status { border-color: #B8C2D8; color: #6a7090; }
-    body.light #cloud-status.online { border-color: #82b59c; color: #2f7a54; }
+    body.light #cloud-status { color: #6a7090; }
+    body.light #cloud-status.online { color: #6a7090; }
 
     body.light .resizer { background: #C5CCE0; }
     body.light .resizer:hover, body.light .resizer.dragging { background: #e94560; }
@@ -4167,11 +4166,11 @@
     <input id="search-input" type="text" placeholder="🔍 タイトル・タグ・本文を検索...">
   </div>
   <button class="btn-header" id="mobile-search-toggle-btn" type="button" data-tooltip="検索" aria-label="検索" aria-controls="search-wrapper" aria-expanded="false">🔍</button>
+  <span id="cloud-status">local</span>
   <button class="btn-header" id="import-btn">import</button>
   <input id="import-file" type="file" accept=".json" hidden>
   <button class="btn-header" id="export-btn">export</button>
   <button class="btn-header" id="lm-settings-header-btn" data-tooltip="設定" aria-label="設定">⚙</button>
-  <span id="cloud-status">local</span>
   <span id="entry-count"></span>
 </div>
 
