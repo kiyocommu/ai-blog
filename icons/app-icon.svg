@@ -1,11 +1,26 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="AI Blog">
   <rect width="512" height="512" rx="96" fill="#64779f"/>
-  <g transform="translate(35.84 35.84) scale(0.86)">
-    <path fill="#ffffff" d="M134 82c0-12 10-22 22-22h8c12 0 22 10 22 22v348c0 12-10 22-22 22h-8c-12 0-22-10-22-22V82z"/>
-    <path fill="#ffffff" d="M170 86c65-25 151-21 199 18 55 45 55 126 0 169-48 38-134 39-199 13V86z"/>
-    <path fill="#ffffff" d="M170 244c70-27 158-20 204 22 57 52 49 136-14 176-51 32-131 28-190 4V244z"/>
-    <path fill="#64779f" d="M218 139c43-16 99-13 130 12 31 26 31 69-2 92-31 23-86 22-128 5V139z"/>
-    <path fill="#64779f" d="M218 300c45-17 102-12 134 16 33 29 29 74-7 98-32 21-86 19-127 2V300z"/>
-    <path d="M160 96v320" fill="none" stroke="#64779f" stroke-width="10" stroke-linecap="round"/>
+  <g transform="translate(256,256) rotate(-45)">
+    <!-- Barrel -->
+    <rect x="-82" y="-36" width="272" height="72" rx="30" fill="#ffffff"/>
+    <!-- Clip -->
+    <rect x="-8" y="-57" width="157" height="19" rx="9.5" fill="#ffffff" opacity="0.5"/>
+    <circle cx="-8" cy="-47" r="11.5" fill="#ffffff" opacity="0.5"/>
+    <!-- B -->
+    <text x="60" y="17" text-anchor="middle"
+      font-family="Georgia,serif" font-size="55" font-weight="700" fill="#64779f">B</text>
+    <!-- Section ring -->
+    <rect x="-97" y="-36" width="15" height="72" rx="7.5" fill="#9aaabf"/>
+    <!-- Nib outer solid -->
+    <path fill="#ffffff"
+      d="M -97,-38 Q -144,-34 -187,-27 Q -220,-23 -246,0
+         Q -220,23 -187,27 Q -144,34 -97,38 Z"/>
+    <!-- Slit cut: ペン先からブリーザーホールまで (±4px) -->
+    <path fill="#64779f"
+      d="M -246,0 Q -220,-4 -187,-4 L -187,4 Q -220,4 -246,0 Z"/>
+    <!-- Breather hole -->
+    <circle cx="-187" cy="0" r="12" fill="#64779f"/>
+    <!-- Tip ball -->
+    <circle cx="-246" cy="0" r="6" fill="#ffffff"/>
   </g>
 </svg>
