@@ -3729,7 +3729,7 @@
       }
       #header h1,
       body.light #header h1 {
-        font-size: 16px;
+        font-size: 17px;
         line-height: 1.15;
         margin: 0;
       }
@@ -3743,6 +3743,7 @@
       }
       #search-input,
       body.light #search-input {
+        font-size: 14px;
         height: 32px;
         padding: 5px 10px;
       }
@@ -3843,14 +3844,14 @@
       #article-list-header,
       body.light #article-list-header {
         box-sizing: border-box;
-        font-size: 12px;
+        font-size: 13px;
         min-height: 30px;
         padding: 3px 7px 4px;
       }
       .article-list-heading {
         flex: 1 1 auto;
         flex-wrap: nowrap;
-        font-size: 12px;
+        font-size: 13px;
         gap: 7px;
         line-height: 1.2;
         min-width: 0;
@@ -3862,7 +3863,7 @@
       #tag-filter-select,
       body.light #tag-filter-select {
         flex: 1;
-        font-size: 11px;
+        font-size: 12px;
         height: 26px;
         max-width: 48vw;
         min-width: 0;
@@ -3885,7 +3886,7 @@
       }
       #main:not(.tile-mode):not(.palette-gallery-mode) .article-item {
         border: 0;
-        border-bottom: 0.5px solid var(--blog-mobile-divider);
+        border-bottom: none;
         border-radius: 0;
         box-shadow: none;
         max-width: none;
@@ -3920,8 +3921,8 @@
         object-fit: cover;
       }
       #main:not(.tile-mode):not(.palette-gallery-mode) .article-item:not(.palette-gallery-card) .blog-card-title {
-        --mobile-card-title-size: 15px;
-        --mobile-card-title-line-height: calc(15px * 1.45);
+        --mobile-card-title-size: 16px;
+        --mobile-card-title-line-height: calc(16px * 1.45);
         font-size: var(--mobile-card-title-size);
         line-height: 1.45;
       }
@@ -3933,9 +3934,19 @@
         line-clamp: 3;
       }
       .blog-card-excerpt {
-        font-size: 12px;
+        font-size: 13px;
         -webkit-line-clamp: 2;
         line-clamp: 2;
+      }
+      .item-num {
+        font-size: 11px;
+      }
+      .item-meta,
+      .item-has-comment {
+        font-size: 12px;
+      }
+      .item-tag {
+        font-size: 11px;
       }
       #detail-header {
         padding: 6px 6px 4px;
@@ -3966,7 +3977,7 @@
         border-radius: 999px;
         background: transparent;
         color: var(--blog-muted);
-        font-size: 17px;
+        font-size: 18px;
         line-height: 1;
         position: relative;
         z-index: 25;
@@ -3983,7 +3994,7 @@
       #detail-title {
         flex: 1;
         min-width: 0;
-        font-size: 20px;
+        font-size: 21px;
         line-height: 1.45;
       }
       #detail-meta {
@@ -3991,6 +4002,7 @@
         max-width: none;
         padding-right: 6px;
         box-sizing: border-box;
+        font-size: 13px;
       }
       #detail-actions {
         margin-left: auto;
@@ -4006,8 +4018,21 @@
       }
       #detail-content {
         padding: 10px 6px 90px;
-        font-size: 16px;
+        font-size: 17px;
         line-height: 1.8;
+      }
+      #detail-content h1 {
+        font-size: 24px;
+      }
+      #detail-content h2 {
+        font-size: 20px;
+      }
+      #detail-content h3 {
+        font-size: 18px;
+      }
+      #detail-content code,
+      #detail-content pre code {
+        font-size: 14px;
       }
       #main.panel-edit:not(.tile-mode):not(.palette-gallery-mode) #edit-view {
         width: calc(100vw - 8px);
@@ -4022,7 +4047,7 @@
       }
       #edit-title-input {
         min-width: 0;
-        font-size: 16px;
+        font-size: 17px;
       }
       #edit-actions .icon-action-btn {
         width: 40px;
@@ -4035,7 +4060,7 @@
       #edit-comment-area {
         min-height: 48vh;
         padding: 36px 6px 18px;
-        font-size: 16px;
+        font-size: 17px;
       }
       .ai-assist-panel {
         display: none !important;
@@ -4101,7 +4126,7 @@
       }
       #header h1,
       body.light #header h1 {
-        font-size: 15px;
+        font-size: 16px;
       }
       #mobile-search-toggle-btn,
       #lm-settings-header-btn {
@@ -4126,8 +4151,8 @@
         height: 66px;
       }
       #main:not(.tile-mode):not(.palette-gallery-mode) .article-item:not(.palette-gallery-card) .blog-card-title {
-        --mobile-card-title-size: 14px;
-        --mobile-card-title-line-height: calc(14px * 1.35);
+        --mobile-card-title-size: 15px;
+        --mobile-card-title-line-height: calc(15px * 1.35);
         font-size: var(--mobile-card-title-size);
         line-height: 1.35;
       }
@@ -4142,7 +4167,7 @@
         padding: 5px 6px 3px;
       }
       #detail-title {
-        font-size: 18px;
+        font-size: 19px;
         line-height: 1.35;
       }
       #detail-content {
